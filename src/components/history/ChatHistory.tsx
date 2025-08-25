@@ -14,7 +14,7 @@ import {
   ScrollArea,
 } from "@/components";
 import { loadChatHistory, deleteConversation } from "@/lib";
-import { ChatConversation } from "@/types";
+import { ChatConversation } from "@/types/completion";
 import { useWindowResize, useWindowFocus } from "@/hooks";
 
 interface ChatHistoryProps {

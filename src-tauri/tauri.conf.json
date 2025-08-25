@@ -33,6 +33,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": ["dmg", "nsis", "deb"],
     "icon": [
       "icons/32x32.png",
@@ -81,9 +82,7 @@
   },
   "plugins": {
     "updater": {
-      "endpoints": [
-        "https://api.github.com/repos/iamsrikanthnani/pluely/releases/latest"
-      ],
+      "endpoints": ["https://pluely.com/api/update"],
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDY2RDJBNUFFM0ZCREEyQjEKUldTeG9yMC9ycVhTWmlBRkovV2N5L3RudDhTTHFzM3QxSkF0R0doRGtvSUJKWktpdGp4cWRhcmcK"
     }
   }

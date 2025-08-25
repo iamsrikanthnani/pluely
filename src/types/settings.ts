@@ -37,6 +37,61 @@ export interface CustomProvider {
   imageExampleStructure?: string;
 }
 
+export type ScreenshotMode = "auto" | "manual";
+
+// Screenshot configuration types
+export interface ScreenshotConfig {
+  mode: ScreenshotMode;
+  autoPrompt: string;
+  enabled: boolean;
+}
+
+// Speech-to-Text provider types
+export interface SpeechProviderRequestConfig {
+  audioFormat: string;
+  audioFieldName: string;
+  additionalFields?: { [key: string]: any };
+}
+
+export interface SpeechProviderResponse {
+  contentPath: string;
+  exampleStructure: any;
+}
+
+export interface SpeechProvider {
+  id: string;
+  name: string;
+  baseUrl: string;
+  endpoint: string;
+  method: "POST" | "PUT" | "PATCH";
+  authType: "bearer" | "custom-header" | "query" | "none";
+  authParam?: string;
+  customHeaderName?: string;
+  apiKey?: string;
+  request: SpeechProviderRequestConfig;
+  response: SpeechProviderResponse;
+  isCustom: boolean;
+  supportsStreaming?: boolean;
+  additionalHeaders?: { [key: string]: string };
+}
+
+export interface SpeechProviderFormData {
+  name: string;
+  baseUrl: string;
+  endpoint: string;
+  method: "POST" | "PUT" | "PATCH";
+  authType: "bearer" | "custom-header" | "query" | "none";
+  authParam: string;
+  customHeaderName: string;
+  apiKey?: string;
+  audioFormat: string;
+  audioFieldName: string;
+  contentPath: string;
+  additionalFields: { [key: string]: string };
+  additionalHeaders: { [key: string]: string };
+  supportsStreaming: boolean;
+}
+
 // Settings-related types
 export interface SettingsState {
   selectedProvider: string;
@@ -50,6 +105,10 @@ export interface SettingsState {
   modelsFetchError: string | null;
   openAiApiKey: string;
   isOpenAiApiKeySubmitted: boolean;
+  screenshotConfig: ScreenshotConfig;
+  selectedSpeechProvider: string;
+  speechProviders: SpeechProvider[];
+  isSpeechProviderSubmitted: boolean;
 }
 
 export interface ModelSelectionProps {
@@ -62,4 +121,11 @@ export interface ModelSelectionProps {
   availableModels?: string[];
   isLoadingModels?: boolean;
   modelsFetchError?: string | null;
+}
+
+export interface SelectedSpeechProvider {
+  id: string;
+  name: string;
+  isConfigured: boolean;
+  apiKey?: string;
 }

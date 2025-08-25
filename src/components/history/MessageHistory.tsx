@@ -5,10 +5,9 @@ import {
   PopoverTrigger,
   Button,
   ScrollArea,
+  Markdown,
 } from "@/components";
-import { ChatMessage } from "@/types";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { ChatMessage } from "@/types/completion";
 
 interface MessageHistoryProps {
   conversationHistory: ChatMessage[];
@@ -107,25 +106,7 @@ export const MessageHistory = ({
                     </span>
                   </div>
                   <div className="text-sm select-auto break-words whitespace-pre-wrap">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                      components={{
-                        pre: ({ node, ...props }) => (
-                          <pre
-                            {...props}
-                            className="whitespace-pre-wrap break-words"
-                          />
-                        ),
-                        code: ({ node, ...props }) => (
-                          <code
-                            {...props}
-                            className="whitespace-pre-wrap break-words"
-                          />
-                        ),
-                      }}
-                    >
-                      {message.content}
-                    </ReactMarkdown>
+                    <Markdown>{message.content}</Markdown>
                   </div>
                 </div>
               ))}

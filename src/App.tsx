@@ -1,10 +1,9 @@
-import { useEffect } from "react";
-import { Card, Settings, Completion, ChatHistory } from "./components";
-import { ChatConversation } from "./types";
-import { check } from "@tauri-apps/plugin-updater";
+import { Card, Settings, Updater } from "./components";
+import { Completion } from "./components/completion";
+import { ChatHistory } from "./components/history";
 
 const App = () => {
-  const handleSelectConversation = (conversation: ChatConversation) => {
+  const handleSelectConversation = (conversation: any) => {
     // Use localStorage to communicate the selected conversation to Completion component
     localStorage.setItem("selectedConversation", JSON.stringify(conversation));
     // Trigger a custom event to notify Completion component
@@ -14,11 +13,6 @@ const App = () => {
       })
     );
   };
-
-  // Check for updates
-  useEffect(() => {
-    check();
-  }, []);
 
   const handleNewConversation = () => {
     // Clear any selected conversation and trigger new conversation
@@ -36,6 +30,7 @@ const App = () => {
           currentConversationId={null}
         />
         <Settings />
+        <Updater />
       </Card>
     </div>
   );

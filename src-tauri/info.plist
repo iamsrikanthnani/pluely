@@ -14,6 +14,10 @@
   <key>NSAppleEventsUsageDescription</key>
   <string>Pluely needs access to Apple Events for enhanced audio processing</string>
   
+  <!-- Screen Capture -->
+  <key>NSScreenCaptureUsageDescription</key>
+  <string>Pluely needs access to screen capture for screenshot functionality</string>
+  
   <!-- Privacy - Audio Processing -->
   <key>NSPrivacyAccessedAPITypes</key>
   <array>
