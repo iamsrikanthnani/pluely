@@ -1,0 +1,169 @@
+# **PRD: Add Nebius AI as a Model Provider in Pluely**
+
+## **Overview**
+
+Pluely is an open-source AI chat application that currently supports multiple providers like OpenAI, Claude, Gemini, and XAI.
+We want to integrate **Nebius AI** as a **new model provider** since it offers **OpenAI-compatible APIs** for chat completions, embeddings, and streaming.
+
+---
+
+## **Goals**
+
+* Add Nebius as a selectable provider in the Pluely UI.
+* Allow users to configure:
+
+  * **API Key** (`NEBIUS_API_KEY`)
+  * **Base URL** (default: `https://api.studio.nebius.com/v1`)
+  * **Model ID** (free-text input; Nebius provides multiple models)
+* Support **chat completions** and **streaming responses**.
+* Ensure Nebius integrates seamlessly with Pluely’s provider abstraction.
+
+---
+
+## **Non-Goals**
+
+* We won’t implement Nebius-specific fine-tuning or model listing APIs.
+* We won’t add Nebius image generation or tools yet.
+* We won’t modify any existing providers.
+
+---
+
+## **Technical Approach**
+
+### **1. Create Nebius Provider Adapter**
+
+**File:** `src/lib/providers/nebius.ts`
+
+```ts
+import OpenAI from "openai";
+
+export function makeNebiusClient(apiKey: string) {
+  return new OpenAI({
+    apiKey,
+    baseURL: "https://api.studio.nebius.com/v1",
+  });
+}
+
+export async function nebiusChat({
+  client,
+  model,
+  messages,
+  stream = false,
+}: {
+  client: OpenAI;
+  model: string;
+  messages: { role: "system" | "user" | "assistant"; content: string }[];
+  stream?: boolean;
+}) {
+  const res = await client.chat.completions.create({
+    model,
+    messages,
+    stream,
+  });
+
+  if (stream) return res;
+  return res.choices?.[0]?.message?.content ?? "";
+}
+```
+
+---
+
+### **2. Register Nebius in Provider Registry**
+
+**File:** `src/lib/providers/index.ts`
+
+```ts
+import { makeNebiusClient, nebiusChat } from "./nebius";
+
+export const providers = {
+  openai: { /* existing */ },
+  claude: { /* existing */ },
+  gemini: { /* existing */ },
+  xai: { /* existing */ },
+  nebius: {
+    makeClient: makeNebiusClient,
+    chat: nebiusChat,
+    label: "Nebius (OpenAI-compatible)",
+    defaultBaseURL: "https://api.studio.nebius.com/v1",
+    fields: [
+      { key: "apiKey", label: "NEBIUS_API_KEY", required: true },
+      { key: "baseURL", label: "Base URL", required: true, default: "https://api.studio.nebius.com/v1" },
+      { key: "model", label: "Model ID", required: true },
+    ],
+  },
+};
+```
+
+---
+
+### **3. Update UI (Settings → Providers)**
+
+* Add a **Nebius** entry to the provider dropdown.
+* Expose input fields:
+
+  * API Key
+  * Base URL (default pre-filled)
+  * Model ID (user-specified)
+
+---
+
+### **4. Support Streaming**
+
+* Pluely already supports streaming for OpenAI.
+* Reuse the same streaming logic for Nebius since its API is OpenAI-compatible.
+
+---
+
+### **5. Update `.env.example`**
+
+```bash
+# Nebius API Key
+NEBIUS_API_KEY=
+```
+
+---
+
+### **6. Update Documentation**
+
+Add a section to `README.md`:
+
+> ### Nebius AI Integration
+>
+> 1. Get your API key from [Nebius AI Studio](https://studio.nebius.com/).
+> 2. Go to **Settings → Providers → Nebius**.
+> 3. Enter your `NEBIUS_API_KEY`.
+> 4. Choose a model from Nebius’ [Models Catalog](https://studio.nebius.com/ai/marketplace/models).
+> 5. Default API base URL: `https://api.studio.nebius.com/v1`.
+
+---
+
+## **Testing Plan**
+
+### **Unit Tests**
+
+* `nebius.ts`
+
+  * Valid API key → successful completion.
+  * Invalid key → proper error handling.
+* Streaming responses tested with Nebius’ `/chat/completions`.
+
+### **Manual Tests**
+
+1. Add Nebius API key in Settings.
+2. Select a valid Nebius model (`meta-llama/Meta-Llama-3.1-8B-Instruct-fast`).
+3. Send chat prompts and verify responses.
+4. Enable streaming mode and confirm incremental tokens.
+
+---
+
+## **Acceptance Criteria**
+
+✅ Nebius shows up as a provider in Settings
+✅ API Key, Base URL, and Model ID configurable
+✅ Supports chat completions
+✅ Supports streaming responses
+✅ PR includes code, docs, and `.env.example` update
+
+---
+
+

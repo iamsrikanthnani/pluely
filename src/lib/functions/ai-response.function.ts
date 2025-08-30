@@ -1,5 +1,5 @@
 import { DEFAULT_SYSTEM_PROMPT } from "@/config";
-import { getAuthHeaders, getByPath } from "./common.function";
+import { getAuthHeaders, getByPath, parseNebiusError } from "./common.function";
 import { TYPE_AI_PROVIDER } from "@/types";
 import { fetch } from "@tauri-apps/plugin-http";
 
@@ -217,6 +217,13 @@ export async function* fetchAIResponse(params: {
       try {
         errorText = await response.text();
       } catch {}
+      
+      // Enhanced error handling for Nebius
+      if (provider?.id === "nebius" && errorText) {
+        yield parseNebiusError(errorText);
+        return;
+      }
+      
       yield `API request failed: ${response.status} ${response.statusText}${
         errorText ? ` - ${errorText}` : ""
       }`;
@@ -264,6 +271,7 @@ export async function* fetchAIResponse(params: {
         case "mistral":
         case "groq":
         case "perplexity":
+        case "nebius":
           lines = buffer.split("data: ");
           buffer = lines.pop() || "";
           for (const line of lines) {

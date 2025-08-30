@@ -22,6 +22,24 @@ export function getByPath(obj: any, path: string): any {
     .reduce((o, k) => (o || {})[k], obj);
 }
 
+export function parseNebiusError(errorText: string): string {
+  try {
+    const error = JSON.parse(errorText);
+    if (error?.error?.message) {
+      return `Nebius API Error: ${error.error.message}`;
+    }
+    if (error?.detail) {
+      return `Nebius API Error: ${error.detail}`;
+    }
+    if (error?.message) {
+      return `Nebius API Error: ${error.message}`;
+    }
+  } catch {
+    // Fall back to original error text if parsing fails
+  }
+  return `Nebius API Error: ${errorText}`;
+}
+
 export function setByPath(obj: any, path: string, value: any): void {
   const keys = path.split(".");
   let current = obj;

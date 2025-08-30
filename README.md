@@ -164,7 +164,7 @@ Get started with your preferred AI provider in seconds. Pluely supports all majo
 
 |                              Anthropic Claude Setup                               |                              Additional AI Providers                               |
 | :-------------------------------------------------------------------------------: | :--------------------------------------------------------------------------------: |
-|    <img src="images/claude.GIF" alt="Anthropic Claude API Setup" width="400"/>    |     **🔸 Mistral AI**<br>**🔸 Groq**<br>**🔸 Cohere**<br>**🔸 Perplexity AI**      |
+|    <img src="images/claude.GIF" alt="Anthropic Claude API Setup" width="400"/>    |     **🔸 Mistral AI**<br>**🔸 Groq**<br>**🔸 Cohere**<br>**🔸 Perplexity AI**<br>**🔸 Nebius AI Studio**      |
 | _Enter your Claude API key and model name manually for powerful AI conversations_ | _These providers are also available in the AI Providers settings for more options_ |
 
 </div>
@@ -173,7 +173,7 @@ Get started with your preferred AI provider in seconds. Pluely supports all majo
 
 Each provider comes pre-configured with optimal settings:
 
-- **🔄 Dynamic Model Fetching**: Automatically fetch latest models from OpenAI, xAI, Gemini, Mistral, and Groq
+- **🔄 Dynamic Model Fetching**: Automatically fetch latest models from OpenAI, xAI, Gemini, Mistral, Groq, and Nebius
 - **🎯 Manual Model Selection**: For Claude and Cohere, enter your preferred model name
 - **🔐 Secure Authentication**: API keys stored locally in browser storage
 - **📡 Streaming Support**: Real-time responses for all providers
@@ -186,6 +186,37 @@ Each provider comes pre-configured with optimal settings:
 2. **Enter API Key**: Add your provider's API key securely
 3. **Select Model**: Choose from dynamically fetched models or enter manually
 4. **Start Chatting**: Begin your AI-powered conversations immediately
+
+**Note**: Nebius offers generous rate limits (400K tokens/min, 600 requests/min) with automatic retries and error handling built into Pluely.
+
+#### 🌟 **Nebius AI Studio Setup**
+
+Get started with Nebius AI Studio for access to 60+ premium models including Llama, DeepSeek, and Qwen:
+
+1. **Create Account**: Sign up at [Nebius AI Studio](https://studio.nebius.com/)
+2. **Get API Key**: Go to [API Keys](https://studio.nebius.ai/settings/api-keys) and create a new key
+3. **Configure in Pluely**: Select "Nebius AI Studio" from the provider list
+4. **Enter Credentials**: Add your API key and select from available models
+5. **Start Chatting**: Enjoy high-performance AI with OpenAI-compatible streaming
+
+**Popular Nebius Models by Use Case:**
+
+📝 **Conversational & General**
+- `meta-llama/Meta-Llama-3.1-70B-Instruct` - Balanced reasoning and chat (default)
+- `Qwen/Qwen3-32B-Instruct` - Versatile conversational AI
+- `meta-llama/Meta-Llama-3.1-8B-Instruct-fast` - Fast responses
+
+🧠 **Advanced Reasoning**
+- `deepseek-ai/DeepSeek-R1-0528` - GPT-4 level reasoning capabilities
+- `Qwen/QwQ-32B-Instruct` - Outstanding logical reasoning
+- `meta-llama/Llama-3.1-Nemotron-Ultra-253B` - Ultra-high accuracy (97% on MATH500)
+
+💻 **Code & Development**
+- `deepseek-ai/DeepSeek-Coder-V2-Instruct` - Specialized coding assistant
+- `Qwen/Qwen3-Coder-32B-Instruct` - Code generation and debugging
+
+🎨 **Vision & Multimodal**
+- `meta-llama/Llama-3.2-90B-Vision-Instruct` - Image analysis and description
 
 #### 🔧 **Custom Provider Support**
 
@@ -315,6 +346,7 @@ Connect to any AI provider with built-in support for:
 - **Anthropic Claude** - Enter your model name manually
 - **xAI Grok** - Dynamically fetches models directly from xAI, select your own
 - **Google Gemini** - Dynamically fetches models directly from Gemini, select your own
+- **Nebius AI Studio** - Dynamically fetches models directly from Nebius, select your own
 - **Custom providers** - Coming soon
 
 ### 🎤 **Advanced Speech-to-Text**
@@ -615,6 +647,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 - **[Anthropic](https://anthropic.com/)** - Claude AI models
 - **[xAI](https://x.ai/)** - Grok AI models
 - **[Google](https://gemini.google.com/)** - Gemini AI models
+- **[Nebius](https://nebius.com/)** - AI Studio platform and models
 
 ---
 

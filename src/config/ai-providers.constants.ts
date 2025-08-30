@@ -320,4 +320,53 @@ export const AI_PROVIDERS = [
     },
     models: null,
   },
+  {
+    id: "nebius",
+    name: "Nebius AI Studio",
+    baseUrl: "https://api.studio.nebius.com",
+    chatEndpoint: "/v1/chat/completions",
+    authType: "bearer",
+    defaultModel: "meta-llama/Meta-Llama-3.1-70B-Instruct",
+    streaming: true,
+    response: {
+      contentPath: "choices[0].message.content",
+      usagePath: "usage",
+    },
+    input: {
+      text: {
+        messages: [
+          {
+            role: "user",
+            content: "Hello!",
+          },
+        ],
+      },
+      image: {
+        type: "base64",
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: "data:image/jpeg;base64,$BASE64_IMAGE" },
+              },
+            ],
+          },
+        ],
+      },
+    },
+    models: {
+      endpoint: "/v1/models",
+      method: "GET",
+      responsePath: "data",
+      idKey: "id",
+    },
+    rateLimit: {
+      tokensPerMinute: 400000,
+      requestsPerMinute: 600,
+      maxRetries: 3,
+      retryDelayMs: 1000,
+    },
+  },
 ];

@@ -35,6 +35,12 @@ export interface TYPE_AI_PROVIDER {
   authParam?: string; // If auth is via query param, e.g., 'key' for Gemini
   compat?: "openai" | "claude" | "gemini" | "cohere" | string; // Compatibility mode for request/response formatting; defaults to 'openai' for custom providers
   isCustom?: boolean; // Flag to indicate if it's a user-added custom provider
+  rateLimit?: {
+    tokensPerMinute: number;
+    requestsPerMinute: number;
+    maxRetries: number;
+    retryDelayMs: number;
+  }; // Optional rate limiting configuration
   // Any additional provider-specific fields can be added here for extensibility
   // [key: string]: any;
 }
