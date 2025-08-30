@@ -1,3 +1,4 @@
+
 # Pluely 🚀
 
 [![Open Source](https://img.shields.io/badge/Open%20Source-❤️-blue)](https://github.com/iamsrikanthnani/pluely)
