@@ -70,6 +70,18 @@ export const SPEECH_TO_TEXT_PROVIDERS = [
     streaming: false,
   },
   {
+    id: "assembly-ai-stt",
+    name: "AssemblyAI Speech-to-Text",
+    curl: `curl -X POST "https://api.assemblyai.com/v2/transcript" \\
+      -H "Authorization: {{API_KEY}}" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "audio_url": "data:audio/wav;base64,{{AUDIO_BASE64}}"
+      }'`,
+    responseContentPath: "text",
+    streaming: false,
+  },
+  {
     id: "speechmatics-stt",
     name: "Speechmatics",
     curl: `curl -X POST "https://asr.api.speechmatics.com/v2/jobs" \\

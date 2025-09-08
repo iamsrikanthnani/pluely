@@ -81,13 +81,7 @@ export const Providers = ({
         <div className="space-y-2">
           <Header
             title="API Key"
-            description={`Enter your ${
-              allAiProviders?.find(
-                (p) => p?.id === selectedAIProvider?.provider
-              )?.isCustom
-                ? "Custom Provider"
-                : selectedAIProvider?.provider
-            } API key to authenticate and access AI models. Your key is stored locally and never shared.`}
+            description={`Enter your ${selectedAIProvider?.provider} API key to authenticate and access AI models. Your key is stored locally and never shared.`}
           />
 
           <div className="space-y-2">
@@ -191,21 +185,11 @@ export const Providers = ({
                   description={`add your preferred ${variable?.key?.replace(
                     /_/g,
                     " "
-                  )} for ${
-                    allAiProviders?.find(
-                      (p) => p?.id === selectedAIProvider?.provider
-                    )?.isCustom
-                      ? "Custom Provider"
-                      : selectedAIProvider?.provider
-                  }`}
+                  )} for ${selectedAIProvider?.provider || "provider"}`}
                 />
                 <TextInput
                   placeholder={`Enter ${
-                    allAiProviders?.find(
-                      (p) => p?.id === selectedAIProvider?.provider
-                    )?.isCustom
-                      ? "Custom Provider"
-                      : selectedAIProvider?.provider
+                    selectedAIProvider?.provider || "provider"
                   } ${variable?.key?.replace(/_/g, " ") || "value"}`}
                   value={getVariableValue()}
                   onChange={(value) => {

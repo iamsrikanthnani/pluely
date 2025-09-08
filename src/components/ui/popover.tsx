@@ -12,15 +12,28 @@ function Popover({
 }
 
 function PopoverTrigger({
+  style,
+  className,
   ...props
 }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
+  const resolvedStyle: React.CSSProperties | undefined = {
+    // If the popover trigger feature is enabled, consume the CSS variable managed by context/hook
+    // Fallback to no transparency
+    backgroundColor: "var(--popover-trigger-bg, initial)",
+    backdropFilter: "var(--popover-trigger-blur, none)",
+    color: "var(--popover-trigger-icon-color, inherit)",
+    ...style,
+  };
+
   return (
     <PopoverPrimitive.Trigger
       data-slot="popover-trigger"
       {...props}
+      style={resolvedStyle}
       className={cn(
-        props.className,
-        "data-[state=open]:bg-primary-foreground data-[state=open]:text-primary data-[state=open]:border-primary/20 data-[state=open]:border-1 transition-all duration-300"
+        className,
+        "transition-all duration-300",
+        "data-[state=open]:text-primary data-[state=open]:border-primary/20 data-[state=open]:border-1"
       )}
     />
   );

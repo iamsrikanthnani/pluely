@@ -244,13 +244,13 @@ export const PluelyApiSetup = () => {
               <div className="space-y-1">
                 <label className="text-sm font-medium">License Key</label>
                 <p className="text-sm font-medium text-muted-foreground">
-                  After completing your purchase, you'll receive a license key
-                  via email. Paste it below to activate.
+                  After successful payment, you will receive a license key.
+                  Enter it below to activate your license.
                 </p>
               </div>
               <div className="flex gap-2">
                 <Input
-                  type="password"
+                  type="text"
                   placeholder="Enter your license key (e.g., 38b1460a-5104-4067-a91d-77b872934d51)"
                   value={licenseKey}
                   onChange={(value) => {

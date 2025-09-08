@@ -74,6 +74,11 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  
+  /* Transparency variables */
+  --window-opacity: 0.8;
+  --card-opacity: 0.9;
+  --overlay-opacity: 0.5;
 }
 
 .dark {
@@ -108,6 +113,11 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  
+  /* Dark mode transparency variables */
+  --window-opacity: 0.85;
+  --card-opacity: 0.9;
+  --overlay-opacity: 0.6;
 }
 
 @layer base {
@@ -118,3 +128,36 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Transparency utility classes */
+.transparent-window {
+  background-color: oklch(from var(--background) l c h / var(--window-opacity));
+  backdrop-filter: blur(12px);
+}
+
+.transparent-card {
+  background-color: oklch(from var(--card) l c h / var(--card-opacity));
+  backdrop-filter: blur(8px);
+}
+
+.transparent-overlay {
+  background-color: oklch(from var(--background) l c h / var(--overlay-opacity));
+  backdrop-filter: blur(16px);
+}
+
+/* Glass morphism effect */
+.glass-effect {
+  background: oklch(from var(--background) l c h / 0.25);
+  backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid oklch(from var(--border) l c h / 0.2);
+  box-shadow: 0 8px 32px 0 oklch(from var(--shadow) l c h / 0.37);
+}
+
+/* Frosted glass effect */
+.frosted-glass {
+  background: oklch(from var(--background) l c h / 0.4);
+  backdrop-filter: blur(20px);
+  border: 1px solid oklch(from var(--border) l c h / 0.3);
+}
+
+/* (custom button border color feature removed) */

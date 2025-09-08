@@ -30,7 +30,7 @@ async function* fetchPluelyAIResponse(params: {
     // Convert history to the expected format
     let historyString: string | undefined;
     if (history.length > 0) {
-      const formattedHistory = history?.reverse()?.map((msg) => ({
+      const formattedHistory = history.map((msg) => ({
         role: msg.role,
         content: [{ type: "text", text: msg.content }],
       }));

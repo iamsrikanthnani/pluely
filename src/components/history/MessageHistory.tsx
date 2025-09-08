@@ -105,7 +105,9 @@ export const MessageHistory = ({
                       })}
                     </span>
                   </div>
-                  <Markdown>{message.content}</Markdown>
+                  <div className="text-sm select-auto break-words whitespace-pre-wrap">
+                    <Markdown>{message.content}</Markdown>
+                  </div>
                 </div>
               ))}
           </div>

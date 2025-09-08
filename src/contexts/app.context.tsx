@@ -9,7 +9,10 @@ import {
   getCustomizableState,
   updateAppIconVisibility,
   updateAlwaysOnTop,
-  updateTitlesVisibility,
+  updateTransparency,
+  updateTransparencyOpacity as updateTransparencyOpacityStorage,
+  updatePopoverTrigger,
+  updatePopoverTriggerOpacity,
   CustomizableState,
 } from "@/lib/storage";
 import { IContextType, ScreenshotConfig, TYPE_PROVIDER } from "@/types";
@@ -68,7 +71,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [customizable, setCustomizable] = useState<CustomizableState>({
     appIcon: { isVisible: true },
     alwaysOnTop: { isEnabled: true },
-    titles: { isEnabled: true },
+    transparency: { isEnabled: true, opacity: 0.8 },
+    popoverTrigger: { isEnabled: true, opacity: 0.25 },
   });
 
   // Pluely API State
@@ -331,11 +335,31 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const toggleTitlesVisibility = (isEnabled: boolean) => {
-    const newState = updateTitlesVisibility(isEnabled);
+  const toggleTransparency = async (isEnabled: boolean) => {
+    const newState = updateTransparency(isEnabled);
     setCustomizable(newState);
     loadData();
   };
+
+  const updateTransparencyOpacity = async (opacity: number) => {
+    const newState = updateTransparencyOpacityStorage(opacity);
+    setCustomizable(newState);
+    loadData();
+  };
+
+  const togglePopoverTrigger = async (isEnabled: boolean) => {
+    const newState = updatePopoverTrigger(isEnabled);
+    setCustomizable(newState);
+    loadData();
+  };
+
+  const updatePopoverTriggerOpacityValue = async (opacity: number) => {
+    const newState = updatePopoverTriggerOpacity(opacity);
+    setCustomizable(newState);
+    loadData();
+  };
+
+  // (button border color feature removed)
 
   const setPluelyApiEnabled = (enabled: boolean) => {
     setPluelyApiEnabledState(enabled);
@@ -360,7 +384,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     customizable,
     toggleAppIconVisibility,
     toggleAlwaysOnTop,
-    toggleTitlesVisibility,
+    toggleTransparency,
+    updateTransparencyOpacity,
+    togglePopoverTrigger,
+    updatePopoverTriggerOpacityValue,
     loadData,
     pluelyApiEnabled,
     setPluelyApiEnabled,

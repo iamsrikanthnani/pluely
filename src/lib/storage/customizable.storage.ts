@@ -7,15 +7,21 @@ export interface CustomizableState {
   alwaysOnTop: {
     isEnabled: boolean;
   };
-  titles: {
+  transparency: {
     isEnabled: boolean;
+    opacity: number;
+  };
+  popoverTrigger: {
+    isEnabled: boolean;
+    opacity: number; // 0..1
   };
 }
 
 export const DEFAULT_CUSTOMIZABLE_STATE: CustomizableState = {
-  appIcon: { isVisible: true },
-  alwaysOnTop: { isEnabled: false },
-  titles: { isEnabled: true },
+  appIcon: { isVisible: false },
+  alwaysOnTop: { isEnabled: true },
+  transparency: { isEnabled: true, opacity: 0.8 },
+  popoverTrigger: { isEnabled: true, opacity: 0.25 },
 };
 
 /**
@@ -24,7 +30,17 @@ export const DEFAULT_CUSTOMIZABLE_STATE: CustomizableState = {
 export const getCustomizableState = (): CustomizableState => {
   try {
     const stored = localStorage.getItem(STORAGE_KEYS.CUSTOMIZABLE);
-    return stored ? JSON.parse(stored) : DEFAULT_CUSTOMIZABLE_STATE;
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      // Ensure all required properties exist (for backward compatibility)
+      return {
+        appIcon: parsed.appIcon || DEFAULT_CUSTOMIZABLE_STATE.appIcon,
+        alwaysOnTop: parsed.alwaysOnTop || DEFAULT_CUSTOMIZABLE_STATE.alwaysOnTop,
+        transparency: parsed.transparency || DEFAULT_CUSTOMIZABLE_STATE.transparency,
+        popoverTrigger: parsed.popoverTrigger || DEFAULT_CUSTOMIZABLE_STATE.popoverTrigger,
+      };
+    }
+    return DEFAULT_CUSTOMIZABLE_STATE;
   } catch (error) {
     console.error("Failed to get customizable state:", error);
     return DEFAULT_CUSTOMIZABLE_STATE;
@@ -65,13 +81,73 @@ export const updateAlwaysOnTop = (isEnabled: boolean): CustomizableState => {
 };
 
 /**
- * Update titles visibility
+ * Update transparency settings
  */
-export const updateTitlesVisibility = (
-  isEnabled: boolean
+export const updateTransparency = (
+  isEnabled: boolean,
+  opacity?: number
 ): CustomizableState => {
   const currentState = getCustomizableState();
-  const newState = { ...currentState, titles: { isEnabled } };
+  const newState = {
+    ...currentState,
+    transparency: {
+      isEnabled,
+      opacity: opacity ?? currentState.transparency.opacity,
+    },
+  };
   setCustomizableState(newState);
   return newState;
 };
+
+/**
+ * Update transparency opacity
+ */
+export const updateTransparencyOpacity = (opacity: number): CustomizableState => {
+  const currentState = getCustomizableState();
+  const newState = {
+    ...currentState,
+    transparency: {
+      ...currentState.transparency,
+      opacity,
+    },
+  };
+  setCustomizableState(newState);
+  return newState;
+};
+
+/**
+ * Update popover trigger transparency settings
+ */
+export const updatePopoverTrigger = (
+  isEnabled: boolean,
+  opacity?: number
+): CustomizableState => {
+  const currentState = getCustomizableState();
+  const newState = {
+    ...currentState,
+    popoverTrigger: {
+      isEnabled,
+      opacity: opacity ?? currentState.popoverTrigger.opacity,
+    },
+  };
+  setCustomizableState(newState);
+  return newState;
+};
+
+/**
+ * Update popover trigger opacity only
+ */
+export const updatePopoverTriggerOpacity = (opacity: number): CustomizableState => {
+  const currentState = getCustomizableState();
+  const newState = {
+    ...currentState,
+    popoverTrigger: {
+      ...currentState.popoverTrigger,
+      opacity,
+    },
+  };
+  setCustomizableState(newState);
+  return newState;
+};
+
+// (button border color feature removed)

@@ -17,10 +17,6 @@ export function loadChatHistory(): ChatConversation[] {
 
 export function saveConversation(conversation: ChatConversation): void {
   try {
-    if (!conversation.id || !conversation.updatedAt) {
-      return;
-    }
-
     const existingData = safeLocalStorage.getItem(STORAGE_KEYS.CHAT_HISTORY);
     let conversations: ChatConversation[] = [];
 

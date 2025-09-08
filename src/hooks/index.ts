@@ -6,6 +6,5 @@ export * from "./useCustomSttProviders";
 export * from "./useSettings";
 export * from "./useGlobalShortcuts";
 export * from "./useSystemAudio";
-export * from "./useHistory";
-export * from "./useCopyToClipboard";
-export * from "./useTitles";
+export * from "./useTransparency";
+// (custom button border color hook removed)

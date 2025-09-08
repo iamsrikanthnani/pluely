@@ -1,10 +1,6 @@
-use tauri::{AppHandle, Manager, Runtime, Emitter, PhysicalPosition};
+use tauri::{AppHandle, Manager, Runtime, Emitter};
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 use serde_json::json;
-use std::sync::Mutex;
-
-// Static storage for window position
-static WINDOW_POSITION: Mutex<Option<PhysicalPosition<i32>>> = Mutex::new(None);
 
 // Default shortcuts
 #[cfg(target_os = "macos")]
@@ -39,12 +35,6 @@ pub fn setup_global_shortcuts<R: Runtime>(app: &AppHandle<R>) -> Result<(), Box<
     app.global_shortcut().on_shortcut(toggle_shortcut, move |app, _shortcut, event| {
         if event.state() == ShortcutState::Pressed {
             if let Some(window) = app.get_webview_window("main") {
-                // Store the current window position before handling toggle
-                if let Ok(pos) = window.outer_position() {
-                    if let Ok(mut stored_pos) = WINDOW_POSITION.lock() {
-                        *stored_pos = Some(pos);
-                    }
-                }
                 handle_toggle_window(&window);
             }
         }
@@ -103,16 +93,6 @@ fn handle_toggle_window<R: Runtime>(window: &tauri::WebviewWindow<R>) {
             if let Err(e) = window.show() {
                 eprintln!("Failed to show window: {}", e);
             }
-
-            // Restore to the last position
-            if let Ok(stored_pos) = WINDOW_POSITION.lock() {
-                if let Some(pos) = *stored_pos {
-                    if let Err(e) = window.set_position(pos) {
-                        eprintln!("Failed to set window to previous location: {}", e);
-                    }
-                }
-            }
-
             if let Err(e) = window.set_focus() {
                 eprintln!("Failed to focus window: {}", e);
             }

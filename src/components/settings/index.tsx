@@ -12,7 +12,8 @@ import { SystemPrompt } from "./SystemPrompt";
 import { ScreenshotConfigs } from "./ScreenshotConfigs";
 import { AppIconToggle } from "./AppIconToggle";
 import { AlwaysOnTopToggle } from "./AlwaysOnTopToggle";
-import { TitleToggle } from "./TitleToggle";
+import { TransparencyToggle } from "./TransparencyToggle";
+// (ButtonColorToggle removed)
 import { AIProviders } from "./ai-configs";
 import { STTProviders } from "./stt-configs";
 import { DeleteChats } from "./DeleteChats";
@@ -61,8 +62,10 @@ export const Settings = () => {
             {/* Always On Top Toggle */}
             <AlwaysOnTopToggle />
 
-            {/* Title Toggle */}
-            <TitleToggle />
+            {/* Transparency Toggle */}
+            <TransparencyToggle />
+
+            {/* (Button Color Toggle removed) */}
 
             {/* Provider Selection */}
             <AIProviders {...settings} />

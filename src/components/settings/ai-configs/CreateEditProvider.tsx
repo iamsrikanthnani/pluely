@@ -52,7 +52,7 @@ export const CreateEditProvider = ({
         <Card className="p-4 border border-input/50 ">
           <div className="flex justify-between items-center">
             <Header
-              title={editingProvider ? `Edit Provider` : "Add Custom Provider"}
+              title={editingProvider ? `Edit Provider}` : "Add Custom Provider"}
               description="Create a custom AI provider to use with your AI-powered applications."
             />
 

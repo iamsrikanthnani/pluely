@@ -21,16 +21,6 @@ Your operating system doesn't allow applications to directly capture "system aud
 
 ---
 
-## 📋 Prerequisites & Dependencies
-
-**Important**: Before setting up audio capture, ensure all required system dependencies are installed for your platform:
-
-👉 **[Tauri Prerequisites & Dependencies](https://v2.tauri.app/start/prerequisites/)**
-
-This includes essential packages like WebKitGTK (Linux), system libraries, and other dependencies required for Tauri applications to run properly on your operating system.
-
----
-
 ## 🍎 macOS Setup
 
 ### Install BlackHole (Recommended)
