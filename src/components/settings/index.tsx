@@ -13,6 +13,7 @@ import { ScreenshotConfigs } from "./ScreenshotConfigs";
 import { AppIconToggle } from "./AppIconToggle";
 import { AlwaysOnTopToggle } from "./AlwaysOnTopToggle";
 import { TitleToggle } from "./TitleToggle";
+import { ShowChatWhenTypingToggle } from "./ShowChatWhenTypingToggle";
 import { AIProviders } from "./ai-configs";
 import { STTProviders } from "./stt-configs";
 import { DeleteChats } from "./DeleteChats";
@@ -63,6 +64,9 @@ export const Settings = () => {
 
             {/* Title Toggle */}
             <TitleToggle />
+
+            {/* Show Chat When Typing Toggle */}
+            <ShowChatWhenTypingToggle />
 
             {/* Provider Selection */}
             <AIProviders {...settings} />

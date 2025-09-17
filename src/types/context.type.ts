@@ -39,6 +39,7 @@ export type IContextType = {
   toggleAppIconVisibility: (isVisible: boolean) => Promise<void>;
   toggleAlwaysOnTop: (isEnabled: boolean) => Promise<void>;
   toggleTitlesVisibility: (isEnabled: boolean) => void;
+  toggleShowChatWhenTyping: (isEnabled: boolean) => void;
   loadData: () => void;
   pluelyApiEnabled: boolean;
   setPluelyApiEnabled: (enabled: boolean) => void;

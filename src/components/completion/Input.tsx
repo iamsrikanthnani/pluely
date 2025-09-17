@@ -10,6 +10,7 @@ import {
 } from "@/components";
 import { MessageHistory } from "../history";
 import { UseCompletionReturn } from "@/types";
+import { useApp } from "@/contexts";
 import { CopyButton } from "../Markdown/copy-button";
 
 export const Input = ({
@@ -32,13 +33,14 @@ export const Input = ({
   inputRef,
   isHidden,
 }: UseCompletionReturn & { isHidden: boolean }) => {
+  const { customizable } = useApp();
   return (
     <div className="relative flex-1">
       <Popover
         open={isPopoverOpen}
         onOpenChange={(open) => {
-          if (!open && !isLoading) {
-            reset();
+          if (!open && !isLoading && !customizable.showChatWhenTyping.isEnabled) {
+            reset() ;
           }
         }}
       >
@@ -60,8 +62,8 @@ export const Input = ({
             />
 
             {/* Conversation thread indicator */}
-            {currentConversationId &&
-              conversationHistory.length > 0 &&
+            {((customizable.showChatWhenTyping.isEnabled && input.length > 0) ||
+              (currentConversationId && conversationHistory.length > 0)) &&
               !isLoading && (
                 <div className="absolute select-none right-1 top-1/2 -translate-y-1/2 flex items-center gap-1">
                   <MessageHistory

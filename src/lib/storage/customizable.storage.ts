@@ -10,12 +10,16 @@ export interface CustomizableState {
   titles: {
     isEnabled: boolean;
   };
+  showChatWhenTyping: {
+    isEnabled: boolean;
+  };
 }
 
 export const DEFAULT_CUSTOMIZABLE_STATE: CustomizableState = {
   appIcon: { isVisible: true },
   alwaysOnTop: { isEnabled: false },
   titles: { isEnabled: true },
+  showChatWhenTyping: { isEnabled: false },
 };
 
 /**
@@ -72,6 +76,18 @@ export const updateTitlesVisibility = (
 ): CustomizableState => {
   const currentState = getCustomizableState();
   const newState = { ...currentState, titles: { isEnabled } };
+  setCustomizableState(newState);
+  return newState;
+};
+
+/**
+ * Update show chat when typing state
+ * */
+export const updateShowChatWhenTyping = (
+  isEnabled: boolean
+): CustomizableState => {
+  const currentState = getCustomizableState();
+  const newState = { ...currentState, showChatWhenTyping: { isEnabled } };
   setCustomizableState(newState);
   return newState;
 };

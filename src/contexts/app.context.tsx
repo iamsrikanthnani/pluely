@@ -10,6 +10,7 @@ import {
   updateAppIconVisibility,
   updateAlwaysOnTop,
   updateTitlesVisibility,
+  updateShowChatWhenTyping,
   CustomizableState,
 } from "@/lib/storage";
 import { IContextType, ScreenshotConfig, TYPE_PROVIDER } from "@/types";
@@ -100,11 +101,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     });
 
   // Unified Customizable State
-  const [customizable, setCustomizable] = useState<CustomizableState>({
-    appIcon: { isVisible: true },
-    alwaysOnTop: { isEnabled: true },
-    titles: { isEnabled: true },
-  });
+  const [customizable, setCustomizable] = useState<CustomizableState>(
+    getCustomizableState()
+  );
 
   // Pluely API State
   const [pluelyApiEnabled, setPluelyApiEnabledState] = useState<boolean>(
@@ -358,6 +357,12 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     loadData();
   };
 
+  const toggleShowChatWhenTyping = (isEnabled: boolean) => {
+    const newState = updateShowChatWhenTyping(isEnabled);
+    setCustomizable(newState);
+    loadData();
+  };
+
   const setPluelyApiEnabled = (enabled: boolean) => {
     setPluelyApiEnabledState(enabled);
     safeLocalStorage.setItem(STORAGE_KEYS.PLUELY_API_ENABLED, String(enabled));
@@ -382,6 +387,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     toggleAppIconVisibility,
     toggleAlwaysOnTop,
     toggleTitlesVisibility,
+    toggleShowChatWhenTyping,
     loadData,
     pluelyApiEnabled,
     setPluelyApiEnabled,
