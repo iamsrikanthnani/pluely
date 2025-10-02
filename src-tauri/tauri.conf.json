@@ -4,9 +4,9 @@
   "version": "0.1.4",
   "identifier": "com.srikanthnani.pluely",
   "build": {
-    "beforeDevCommand": "npm run dev",
+    "beforeDevCommand": "bun run dev",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
+    "beforeBuildCommand": "bun run build",
     "frontendDist": "../dist"
   },
   "app": {
@@ -14,8 +14,8 @@
     "windows": [
       {
         "title": "Pluely - AI Assistant",
-        "width": 700,
-        "height": 54,
+        "width": 100,
+        "height": 46,
         "decorations": false,
         "transparent": true,
         "alwaysOnTop": false,
@@ -34,8 +34,8 @@
   },
   "bundle": {
     "active": true,
-    "createUpdaterArtifacts": true,
-    "targets": "all",
+    "createUpdaterArtifacts": false,
+    "targets": ["deb", "rpm"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

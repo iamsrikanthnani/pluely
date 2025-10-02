@@ -1,0 +1,18 @@
+{
+  "rust-analyzer.checkOnSave": false,
+  "rust-analyzer.cargo.buildScripts.enable": false,
+  "rust-analyzer.diagnostics.enable": true,
+  "rust-analyzer.cargo.features": "all",
+  "rust-analyzer.procMacro.enable": false,
+  "rust-analyzer.cargo.allTargets": false,
+  "rust-analyzer.files.excludeDirs": [
+    "**/target",
+    "**/node_modules",
+    "src-tauri/gen",
+    "images"
+  ],
+  "rust-analyzer.checkOnSave.enable": true,
+  "rust-analyzer.checkOnSave.command": "clippy",
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 800
+}

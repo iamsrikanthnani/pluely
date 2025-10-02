@@ -9,8 +9,10 @@ export const Completion = ({ isHidden }: { isHidden: boolean }) => {
 
   return (
     <>
-      <Audio {...completion} />
-      <Input {...completion} isHidden={isHidden} />
+      <div className="flex items-center gap-0">
+        <Audio {...completion} />
+        <Input {...completion} isHidden={isHidden} />
+      </div>
       {completion?.screenshotConfiguration?.enabled && (
         <Screenshot {...completion} />
       )}

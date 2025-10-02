@@ -114,6 +114,10 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body, #root {
+    margin: 0;
+    padding: 0;
+  }
   body {
     @apply bg-background text-foreground;
   }

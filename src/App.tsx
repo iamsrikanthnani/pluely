@@ -69,7 +69,7 @@ const App = () => {
         isHidden ? "hidden pointer-events-none" : ""
       }`}
     >
-      <Card className="w-full flex flex-row items-center gap-2 p-2">
+      <Card className="inline-flex flex-row items-center gap-1 px-2 py-1 rounded-xl border shadow-sm">
         <SystemAudio {...systemAudio} />
         {systemAudio?.capturing ? (
           <div className="flex flex-row items-center gap-2 justify-between w-full">
@@ -92,7 +92,7 @@ const App = () => {
           className={`${
             systemAudio?.capturing
               ? "hidden w-full fade-out transition-all duration-300"
-              : "w-full flex flex-row gap-2 items-center"
+              : "flex flex-row gap-1 items-center"
           }`}
         >
           <Completion isHidden={isHidden} />

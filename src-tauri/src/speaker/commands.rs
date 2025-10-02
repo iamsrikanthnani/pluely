@@ -1,7 +1,8 @@
 // Pluely AI Speech Detection, and capture system audio (speaker output) as a stream of f32 samples.
 use tauri::{AppHandle, Emitter, Manager};
 use futures_util::StreamExt;
-use tauri_plugin_shell::ShellExt;
+#[cfg(any(target_os = "macos", target_os = "windows"))]
+use tauri_plugin_shell::ShellExt as _;
 use crate::speaker::{SpeakerInput};
 use anyhow::Result;
 use hound::{WavSpec, WavWriter};
@@ -170,5 +171,6 @@ pub async fn request_system_audio_access(app: AppHandle) -> Result<(), String> {
     {
         app.shell().command("ms-settings:sound").spawn().map_err(|e| e.to_string())?;
     }
+    let _ = app; // silence unused on other targets
     Ok(())
 }

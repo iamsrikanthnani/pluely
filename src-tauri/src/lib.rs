@@ -40,7 +40,7 @@ fn set_window_height(window: tauri::WebviewWindow, height: u32) -> Result<(), St
     
     match window.set_size(Size::Logical(new_size)) {
         Ok(_) => {
-            if let Err(e) = window::position_window_top_center(&window, 54) {
+            if let Err(e) = window::position_window_top_center(&window, 0) {
                 eprintln!("Failed to reposition window: {}", e);
             }
             Ok(())
@@ -69,9 +69,10 @@ fn capture_to_base64() -> Result<String, String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let mut builder = tauri::Builder::default()
+    let builder = tauri::Builder::default()
         .manage(AudioState::default())
         .manage(shortcuts::WindowVisibility(Mutex::new(false)))
+        .manage(shortcuts::ShortcutStore::default())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_http::init())
@@ -85,6 +86,7 @@ pub fn run() {
             capture_to_base64,
             shortcuts::get_shortcuts,
             shortcuts::check_shortcuts_registered,
+            shortcuts::set_shortcuts,
             shortcuts::set_app_icon_visibility,
             shortcuts::set_always_on_top,
             activate::activate_license_api,

@@ -1,4 +1,5 @@
 import { Loader2, XIcon } from "lucide-react";
+//
 import {
   Popover,
   PopoverContent,
@@ -32,8 +33,9 @@ export const Input = ({
   inputRef,
   isHidden,
 }: UseCompletionReturn & { isHidden: boolean }) => {
+
   return (
-    <div className="relative flex-1">
+    <div className="relative flex-none">
       <Popover
         open={isPopoverOpen}
         onOpenChange={(open) => {
@@ -56,7 +58,7 @@ export const Input = ({
                 currentConversationId && conversationHistory.length > 0
                   ? "pr-14"
                   : "pr-12"
-              }`}
+              } h-8 text-sm max-w-[300px]`}
             />
 
             {/* Conversation thread indicator */}
@@ -132,6 +134,7 @@ export const Input = ({
           </ScrollArea>
         </PopoverContent>
       </Popover>
+      {/* No toggle button; input is always visible */}
     </div>
   );
 };
