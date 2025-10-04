@@ -6,6 +6,7 @@
   "platforms": ["windows", "linux"],
   "permissions": [
     "core:default",
+    "core:window:allow-start-dragging",
     "opener:default",
     "updater:default",
     "keychain:default",

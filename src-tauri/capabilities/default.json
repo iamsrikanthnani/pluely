@@ -6,6 +6,7 @@
   "platforms": ["macOS"],
   "permissions": [
     "core:default",
+    "core:window:allow-start-dragging",
     "opener:default",
     "updater:default",
     "macos-permissions:default",
