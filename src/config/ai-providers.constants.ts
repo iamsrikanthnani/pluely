@@ -130,4 +130,15 @@ export const AI_PROVIDERS = [
     responseContentPath: "choices[0].message.content",
     streaming: true,
   },
+  {
+    id: "lmstudio",
+    curl: `curl http://localhost:1234/v1/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "{{MODEL}}",
+    "messages": [{"role": "system", "content": "{{SYSTEM_PROMPT}}"}, {"role": "user", "content": "{{TEXT}}"}]
+  }'`,
+    responseContentPath: "choices[0].message.content",
+    streaming: false,
+  },
 ];
