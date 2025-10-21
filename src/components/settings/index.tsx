@@ -18,7 +18,6 @@ import { TitleToggle } from "./TitleToggle";
 import { AIProviders } from "./ai-configs";
 import { STTProviders } from "./stt-configs";
 import { DeleteChats } from "./DeleteChats";
-import { PluelyApiSetup } from "./PluelyApiSetup";
 import { ShortcutManager } from "./shortcuts";
 import Theme from "./Theme";
 import { SettingsNavigation } from "./SettingsNavigation";
@@ -53,9 +52,6 @@ export const Settings = () => {
           <div className="p-6 space-y-6">
             {/* Settings Navigation */}
             <SettingsNavigation />
-
-            {/* Pluely API Setup */}
-            <PluelyApiSetup />
 
             {/* System Prompt */}
             <SystemPrompt {...settings} />

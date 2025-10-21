@@ -33,5 +33,4 @@ export interface UseSettingsReturn {
   setShowDeleteConfirmDialog: React.Dispatch<React.SetStateAction<boolean>>;
   variables: { key: string; value: string }[];
   sttVariables: { key: string; value: string }[];
-  hasActiveLicense: boolean;
 }

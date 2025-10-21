@@ -1,7 +1,6 @@
 import { Button } from "@/components";
 
 const SETTINGS_SECTIONS = [
-  { id: "pluely-api", label: "Pluely access" },
   { id: "system-prompt", label: "System prompt" },
   { id: "theme", label: "Theme" },
   { id: "screenshot", label: "Screenshot config" },

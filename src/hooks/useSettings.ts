@@ -20,7 +20,6 @@ export const useSettings = () => {
     selectedSttProvider,
     onSetSelectedAIProvider,
     onSetSelectedSttProvider,
-    hasActiveLicense,
   } = useApp();
   const { resizeWindow } = useWindowResize();
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
@@ -59,9 +58,6 @@ export const useSettings = () => {
   };
 
   const handleScreenshotEnabledChange = (enabled: boolean) => {
-    if (!enabled && !hasActiveLicense) {
-      return;
-    }
     const newConfig = { ...screenshotConfiguration, enabled };
     setScreenshotConfiguration(newConfig);
     safeLocalStorage.setItem(
@@ -124,6 +120,5 @@ export const useSettings = () => {
     setShowDeleteConfirmDialog,
     variables,
     sttVariables,
-    hasActiveLicense,
   };
 };
