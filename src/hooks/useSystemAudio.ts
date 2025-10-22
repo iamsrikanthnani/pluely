@@ -286,6 +286,8 @@ export function useSystemAudio() {
                   return { role: msg.role, content: msg.content };
                 });
 
+                setIsProcessing(false);
+
                 await processWithAI(
                   transcription,
                   effectiveSystemPrompt,
@@ -632,6 +634,33 @@ export function useSystemAudio() {
     }
   }, [isContinuousMode]);
 
+  const forceSendVadSegment = useCallback(async () => {
+    if (!capturing || isContinuousMode) {
+      console.warn("Force send is only available in VAD mode while capturing");
+      return;
+    }
+    if (isProcessing || isAIProcessing) {
+      console.warn("Audio is already processing; skipping force send");
+      return;
+    }
+
+    try {
+      setError("");
+      setIsProcessing(true);
+      setIsPopoverOpen(true);
+      await invoke("force_send_vad");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(`Failed to send audio: ${errorMessage}`);
+      setIsProcessing(false);
+    }
+  }, [
+    capturing,
+    isContinuousMode,
+    isProcessing,
+    isAIProcessing,
+  ]);
+
   const handleSetup = useCallback(async () => {
     try {
       const platform = navigator.platform.toLowerCase();
@@ -929,6 +958,7 @@ export function useSystemAudio() {
     manualStopAndSend,
     startContinuousRecording,
     ignoreContinuousRecording,
+    forceSendVadSegment,
     // Scroll area ref for keyboard navigation
     scrollAreaRef,
     stream,

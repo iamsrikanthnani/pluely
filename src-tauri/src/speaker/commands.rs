@@ -135,6 +135,11 @@ async fn run_vad_capture(
     let mut silence_chunks = 0;
     let mut speech_chunks = 0;
     let max_samples = sr as usize * 30; // 30s safety cap per utterance
+    let force_send_flag = Arc::new(AtomicBool::new(false));
+    let force_send_listener_flag = force_send_flag.clone();
+    let force_listener = app.listen("force-send-vad", move |_| {
+        force_send_listener_flag.store(true, Ordering::Release);
+    });
 
     while let Some(sample) = stream.next().await {
         buffer.push_back(sample);
@@ -236,9 +241,37 @@ async fn run_vad_capture(
                     }
                 }
             }
+
+            if force_send_flag.swap(false, Ordering::AcqRel) {
+                let mut flush_buffer =
+                    Vec::with_capacity(pre_speech.len() + speech_buffer.len());
+                flush_buffer.extend(pre_speech.iter().copied());
+                flush_buffer.extend_from_slice(&speech_buffer);
+
+                if flush_buffer.is_empty() {
+                    let _ = app.emit("audio-encoding-error", "No audio available to send");
+                } else {
+                    let normalized_buffer = normalize_audio_level(&flush_buffer, 0.1);
+                    match samples_to_wav_b64(sr, &normalized_buffer) {
+                        Ok(b64) => {
+                            let _ = app.emit("speech-detected", b64);
+                        }
+                        Err(e) => {
+                            error!("Failed to encode forced VAD audio: {}", e);
+                            let _ = app.emit("audio-encoding-error", "Failed to encode audio");
+                        }
+                    }
+                }
+
+                speech_buffer.clear();
+                pre_speech.clear();
+                in_speech = false;
+                silence_chunks = 0;
+                speech_chunks = 0;
+            }
         }
     }
-    
+    app.unlisten(force_listener);
 }
 
 // Continuous capture (VAD disabled)
@@ -476,6 +509,35 @@ pub async fn manual_stop_continuous(app: AppHandle) -> Result<(), String> {
     
     tokio::time::sleep(tokio::time::Duration::from_millis(20)).await;
     
+    Ok(())
+}
+
+/// Force emit current VAD buffer without waiting for silence
+#[tauri::command]
+pub async fn force_send_vad(app: AppHandle) -> Result<(), String> {
+    let state = app.state::<crate::AudioState>();
+
+    let is_capturing = state
+        .is_capturing
+        .lock()
+        .map_err(|e| format!("Failed to read capture state: {}", e))?;
+    if !*is_capturing {
+        return Err("System audio capture is not active".to_string());
+    }
+    drop(is_capturing);
+
+    let vad_config = state
+        .vad_config
+        .lock()
+        .map_err(|e| format!("Failed to read VAD config: {}", e))?;
+    if !vad_config.enabled {
+        return Err("Voice Activity Detection mode is not enabled".to_string());
+    }
+    drop(vad_config);
+
+    app.emit("force-send-vad", ())
+        .map_err(|e| format!("Failed to emit VAD send event: {}", e))?;
+
     Ok(())
 }
 

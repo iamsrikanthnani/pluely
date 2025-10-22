@@ -9,9 +9,12 @@ import {
   ChatHistory,
   AudioVisualizer,
   StatusIndicator,
+  Button,
 } from "@/components";
+import { LoaderIcon, SendIcon } from "lucide-react";
 import { useApp } from "@/hooks";
 
+// test comment
 const App = () => {
   const {
     isHidden,
@@ -27,6 +30,22 @@ const App = () => {
     >
       <Card className="w-full flex flex-row items-center gap-2 p-2">
         <SystemAudio {...systemAudio} />
+        {systemAudio?.capturing && !systemAudio?.isContinuousMode ? (
+          <Button
+            onClick={() => systemAudio.forceSendVadSegment()}
+            disabled={systemAudio.isProcessing || systemAudio.isAIProcessing}
+            variant="default"
+            className="gap-2"
+            title="Send the current audio immediately"
+          >
+            {systemAudio.isProcessing ? (
+              <LoaderIcon className="h-4 w-4 animate-spin" />
+            ) : (
+              <SendIcon className="h-4 w-4" />
+            )}
+            {/* <span>Send Now</span> */}
+          </Button>
+        ) : null}
         {systemAudio?.capturing ? (
           <div className="flex flex-row items-center gap-2 justify-between w-full">
             <div className="flex flex-1 items-center gap-2">
