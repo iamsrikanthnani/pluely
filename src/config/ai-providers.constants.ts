@@ -22,7 +22,7 @@ export const AI_PROVIDERS = [
     "model": "{{MODEL}}",
     "system": "{{SYSTEM_PROMPT}}",
     "messages": [{"role": "user", "content": [{"type": "text", "text": "{{TEXT}}"}, {"type": "image", "source": {"type": "base64", "media_type": "image/png", "data": "{{IMAGE}}"}}]}],
-    "max_tokens": 1024
+    "max_tokens": 32768
   }'`,
     responseContentPath: "content[0].text",
     streaming: true,
@@ -85,7 +85,7 @@ export const AI_PROVIDERS = [
       "model": "{{MODEL}}",
       "messages": [{"role": "system", "content": "{{SYSTEM_PROMPT}}"}, {"role": "user", "content": [{"type": "text", "text": "{{TEXT}}"}, {"type": "image_url", "image_url": {"url": "data:image/png;base64,{{IMAGE}}"}}]}],
       "temperature": 1,
-      "max_completion_tokens": 8192,
+      "max_completion_tokens": 32768,
       "top_p": 1,
       "stream": true,
       "reasoning_effort": "medium",
