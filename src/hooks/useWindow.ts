@@ -33,6 +33,8 @@ export const useWindowResize = () => {
   // Setup drag handling and popover monitoring
   useEffect(() => {
     let isDragging = false;
+    let isScrolling = false;
+    let scrollTimeout: ReturnType<typeof setTimeout> | null = null;
 
     const handleMouseDown = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -47,16 +49,32 @@ export const useWindowResize = () => {
       if (isDragging) {
         isDragging = false;
 
+        // Only collapse if not scrolling
         setTimeout(() => {
-          if (!isAnyPopoverOpen()) {
+          if (!isAnyPopoverOpen() && !isScrolling) {
             resizeWindow(false);
           }
         }, 100);
       }
     };
 
+    // Track scrolling to prevent collapse during scroll
+    const handleScroll = () => {
+      isScrolling = true;
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
+      scrollTimeout = setTimeout(() => {
+        isScrolling = false;
+      }, 500); // Wait 500ms after scroll stops
+    };
+
+    // Add scroll listener to all scrollable elements
+    document.addEventListener("scroll", handleScroll, true);
+
     const observer = new MutationObserver(() => {
-      if (!isAnyPopoverOpen()) {
+      // Only collapse if no popover is open AND not scrolling
+      if (!isAnyPopoverOpen() && !isScrolling) {
         resizeWindow(false);
       }
     });
@@ -75,6 +93,10 @@ export const useWindowResize = () => {
     return () => {
       document.removeEventListener("mousedown", handleMouseDown);
       document.removeEventListener("mouseup", handleMouseUp);
+      document.removeEventListener("scroll", handleScroll, true);
+      if (scrollTimeout) {
+        clearTimeout(scrollTimeout);
+      }
       observer.disconnect();
     };
   }, [resizeWindow]);
