@@ -374,6 +374,30 @@ export async function* fetchAIResponse(params: {
         }
       }
     }
+
+    // Process any remaining data in the buffer
+    if (buffer.trim()) {
+      const lines = buffer.split("\n");
+      for (const line of lines) {
+        if (line.startsWith("data:")) {
+          const trimmed = line.substring(5).trim();
+          if (trimmed && trimmed !== "[DONE]") {
+            try {
+              const parsed = JSON.parse(trimmed);
+              const delta = getStreamingContent(
+                parsed,
+                provider?.responseContentPath || ""
+              );
+              if (delta) {
+                yield delta;
+              }
+            } catch (e) {
+              // Ignore parsing errors for final incomplete chunks
+            }
+          }
+        }
+      }
+    }
   } catch (error) {
     throw new Error(
       `Error in fetchAIResponse: ${
