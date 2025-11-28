@@ -74,6 +74,7 @@ impl Default for StealthInputState {
 }
 
 /// Custom window procedure that intercepts activation messages
+/// Only blocks activation when stealth mode is enabled
 unsafe extern "system" fn stealth_wndproc(
     hwnd: HWND,
     msg: u32,

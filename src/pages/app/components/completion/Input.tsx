@@ -75,8 +75,12 @@ export const Input = ({
   // Handle stealth enter - simulate form submit
   const handleStealthEnter = useCallback(() => {
     if (!isLoadingRef.current && !isHiddenRef.current && inputValueRef.current.trim()) {
-      // Simulate the keypress event for Enter
-      handleKeyPress({ key: "Enter" } as React.KeyboardEvent<HTMLInputElement>);
+      // Simulate the keypress event for Enter with a complete mock event
+      handleKeyPress({
+        key: "Enter",
+        shiftKey: false,
+        preventDefault: () => {}
+      } as unknown as React.KeyboardEvent<HTMLInputElement>);
     }
   }, [handleKeyPress]);
 
@@ -105,6 +109,17 @@ export const Input = ({
       }
     }
   }, [isSupported, isHidden, enable, disable]);
+
+  // Focus input when window becomes visible (after isHidden changes to false)
+  useEffect(() => {
+    if (!isHidden && inputRef?.current) {
+      // Small delay to ensure the input is enabled and rendered
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isHidden, inputRef]);
 
   return (
     <div className="relative flex-1">
