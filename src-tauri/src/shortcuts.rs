@@ -194,6 +194,8 @@ fn handle_toggle_window<R: Runtime>(app: &AppHandle<R>) {
 
     #[cfg(target_os = "windows")]
     {
+        use crate::stealth_windows::StealthInputState;
+
         let state = app.state::<WindowVisibility>();
         let mut is_hidden = state.is_hidden.lock().unwrap();
         *is_hidden = !*is_hidden;
@@ -202,13 +204,33 @@ fn handle_toggle_window<R: Runtime>(app: &AppHandle<R>) {
             eprintln!("Failed to emit toggle-window-visibility event: {}", e);
         }
 
-        if !*is_hidden {
-            if let Err(e) = window.show() {
-                eprintln!("Failed to show window: {}", e);
+        // Get the HWND from stealth state
+        let hwnd = if let Some(stealth_state) = app.try_state::<StealthInputState>() {
+            stealth_state.main_hwnd.lock().ok().and_then(|h| *h)
+        } else {
+            None
+        };
+
+        if *is_hidden {
+            // Window should be hidden - use stealth hide
+            if let Some(hwnd) = hwnd {
+                crate::stealth_windows::hide_window_stealth(hwnd);
+            } else {
+                if let Err(e) = window.hide() {
+                    eprintln!("Failed to hide window: {}", e);
+                }
             }
-            if let Err(e) = window.set_focus() {
-                eprintln!("Failed to focus window: {}", e);
+        } else {
+            // Window should be visible - use stealth show (NO FOCUS STEALING!)
+            if let Some(hwnd) = hwnd {
+                crate::stealth_windows::show_window_stealth(hwnd);
+            } else {
+                if let Err(e) = window.show() {
+                    eprintln!("Failed to show window: {}", e);
+                }
             }
+            // Don't call set_focus() - we want NO focus stealing
+            // The stealth input hook will capture keyboard input
             if let Err(e) = window.emit("focus-text-input", json!({})) {
                 eprintln!("Failed to emit focus-text-input event: {}", e);
             }

@@ -12,6 +12,8 @@ import {
 } from "@/components";
 import { UseCompletionReturn } from "@/types";
 import { MessageHistory } from "./MessageHistory";
+import { useStealthInput } from "@/hooks";
+import { useEffect, useCallback, useRef } from "react";
 
 export const Input = ({
   isPopoverOpen,
@@ -35,6 +37,75 @@ export const Input = ({
   keepEngaged,
   setKeepEngaged,
 }: UseCompletionReturn & { isHidden: boolean }) => {
+  // Use refs to avoid stale closures in stealth callbacks
+  const inputValueRef = useRef(input);
+  const isLoadingRef = useRef(isLoading);
+  const isHiddenRef = useRef(isHidden);
+
+  // Keep refs updated
+  useEffect(() => {
+    inputValueRef.current = input;
+  }, [input]);
+
+  useEffect(() => {
+    isLoadingRef.current = isLoading;
+  }, [isLoading]);
+
+  useEffect(() => {
+    isHiddenRef.current = isHidden;
+  }, [isHidden]);
+
+  // Handle stealth input character
+  const handleStealthInput = useCallback(
+    (char: string) => {
+      if (!isLoadingRef.current && !isHiddenRef.current) {
+        setInput(inputValueRef.current + char);
+      }
+    },
+    [setInput]
+  );
+
+  // Handle stealth backspace
+  const handleStealthBackspace = useCallback(() => {
+    if (!isLoadingRef.current && !isHiddenRef.current) {
+      setInput(inputValueRef.current.slice(0, -1));
+    }
+  }, [setInput]);
+
+  // Handle stealth enter - simulate form submit
+  const handleStealthEnter = useCallback(() => {
+    if (!isLoadingRef.current && !isHiddenRef.current && inputValueRef.current.trim()) {
+      // Simulate the keypress event for Enter
+      handleKeyPress({ key: "Enter" } as React.KeyboardEvent<HTMLInputElement>);
+    }
+  }, [handleKeyPress]);
+
+  // Handle stealth escape
+  const handleStealthEscape = useCallback(() => {
+    if (!isLoadingRef.current) {
+      reset();
+    }
+  }, [reset]);
+
+  // Initialize stealth input hook
+  const { isSupported, enable, disable } = useStealthInput({
+    onInput: handleStealthInput,
+    onBackspace: handleStealthBackspace,
+    onEnter: handleStealthEnter,
+    onEscape: handleStealthEscape,
+  });
+
+  // Enable/disable stealth mode based on visibility
+  useEffect(() => {
+    if (isSupported) {
+      if (!isHidden) {
+        enable();
+      } else {
+        disable();
+      }
+    }
+  }, [isSupported, isHidden, enable, disable]);
+
   return (
     <div className="relative flex-1">
       <Popover
