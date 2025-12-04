@@ -77,7 +77,7 @@ export const useCompletion = () => {
   const [isFilesPopoverOpen, setIsFilesPopoverOpen] = useState(false);
   const [isScreenshotLoading, setIsScreenshotLoading] = useState(false);
   const [keepEngaged, setKeepEngaged] = useState(false);
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const isProcessingScreenshotRef = useRef(false);
   const screenshotConfigRef = useRef(screenshotConfiguration);
   const hasCheckedPermissionRef = useRef(false);
@@ -407,7 +407,7 @@ export const useCompletion = () => {
         state.conversationHistory.length === 0
           ? generateConversationTitle(userMessage)
           : existingConversation?.title ||
-            generateConversationTitle(userMessage);
+          generateConversationTitle(userMessage);
 
       const conversation: ChatConversation = {
         id: conversationId,

@@ -17,7 +17,7 @@ let globalEventListeners: {
 let lastScreenshotEventTime = 0;
 
 export const useGlobalShortcuts = () => {
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
   const audioCallbackRef = useRef<(() => void) | null>(null);
   const screenshotCallbackRef = useRef<(() => void) | null>(null);
   const systemAudioCallbackRef = useRef<(() => void) | null>(null);
@@ -60,7 +60,7 @@ export const useGlobalShortcuts = () => {
   }, []);
 
   // Register input element for auto-focus
-  const registerInputRef = useCallback((input: HTMLInputElement | null) => {
+  const registerInputRef = useCallback((input: HTMLInputElement | HTMLTextAreaElement | null) => {
     inputRef.current = input;
   }, []);
 

@@ -72,7 +72,7 @@ const AppContext = createContext<IContextType | undefined>(undefined);
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [systemPrompt, setSystemPrompt] = useState<string>(
     safeLocalStorage.getItem(STORAGE_KEYS.SYSTEM_PROMPT) ||
-      DEFAULT_SYSTEM_PROMPT
+    DEFAULT_SYSTEM_PROMPT
   );
 
   const [selectedAudioDevices, setSelectedAudioDevices] = useState<{
@@ -126,6 +126,30 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [pluelyApiEnabled, setPluelyApiEnabledState] = useState<boolean>(
     safeLocalStorage.getItem(STORAGE_KEYS.PLUELY_API_ENABLED) === "true"
   );
+
+  // Stealth Mode State
+  const [isStealthActive, setIsStealthActiveState] = useState<boolean>(false);
+
+  const setStealthActive = async (active: boolean) => {
+    setIsStealthActiveState(active);
+    try {
+      await invoke("set_stealth_mode", { enabled: active });
+    } catch (error) {
+      console.error("Failed to set stealth mode:", error);
+    }
+  };
+
+  useEffect(() => {
+    const unlisten = listen("stealth-key-event", (event: any) => {
+      if (event.payload.event_type === "deactivate") {
+        setStealthActive(false);
+      }
+    });
+
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   const getActiveLicenseStatus = async () => {
     const response: { is_active: boolean } = await invoke(
@@ -551,6 +575,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     selectedAudioDevices,
     setSelectedAudioDevices,
     setCursorType,
+    isStealthActive,
+    setStealthActive,
   };
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

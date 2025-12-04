@@ -56,4 +56,6 @@ export type IContextType = {
     }>
   >;
   setCursorType: (type: CursorType) => void;
+  isStealthActive: boolean;
+  setStealthActive: (active: boolean) => void;
 };

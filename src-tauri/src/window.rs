@@ -19,11 +19,41 @@ pub fn setup_main_window(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 
     position_window_top_center(&window, TOP_OFFSET)?;
 
-    // Set window as non-focusable on Windows
-    // #[cfg(target_os = "windows")]
-    // {
-    //     let _ = window.set_focusable(false);
-    // }
+    // Apply stealth styles on Windows
+    #[cfg(target_os = "windows")]
+    {
+        apply_stealth_styles(&window).map_err(|e| format!("Failed to apply stealth styles: {}", e))?;
+    }
+
+    Ok(())
+}
+
+#[cfg(target_os = "windows")]
+pub fn apply_stealth_styles(window: &WebviewWindow) -> Result<(), Box<dyn std::error::Error>> {
+    use windows::Win32::UI::WindowsAndMessaging::{
+        GetWindowLongPtrW, SetWindowLongPtrW, GWL_EXSTYLE, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+        SetWindowPos, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, SWP_FRAMECHANGED, HWND_TOPMOST
+    };
+    use windows::Win32::Foundation::HWND;
+
+    let hwnd = window.hwnd().map_err(|e| e.to_string())?;
+    let hwnd = HWND(hwnd.0 as _);
+
+    unsafe {
+        let mut style = GetWindowLongPtrW(hwnd, GWL_EXSTYLE);
+        // Add WS_EX_NOACTIVATE to prevent focus stealing
+        // Add WS_EX_TOOLWINDOW to hide from Alt-Tab (optional, but good for stealth)
+        style |= (WS_EX_NOACTIVATE.0 | WS_EX_TOOLWINDOW.0) as isize;
+        SetWindowLongPtrW(hwnd, GWL_EXSTYLE, style);
+        
+        // Force style update
+        SetWindowPos(
+            hwnd,
+            HWND_TOPMOST,
+            0, 0, 0, 0,
+            SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE | SWP_FRAMECHANGED
+        );
+    }
 
     Ok(())
 }

@@ -6,12 +6,16 @@ mod db;
 mod shortcuts;
 mod window;
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Manager, WebviewWindow};
+use tauri::{AppHandle, Manager};
+#[cfg(target_os = "macos")]
+use tauri::WebviewWindow;
 use tauri_plugin_posthog::{init as posthog_init, PostHogConfig, PostHogOptions};
 use tokio::task::JoinHandle;
 mod speaker;
+mod stealth;
 use capture::CaptureState;
 use speaker::VadConfig;
+use stealth::StealthManager;
 
 #[cfg(target_os = "macos")]
 #[allow(deprecated)]
@@ -29,10 +33,23 @@ fn get_app_version() -> String {
     env!("CARGO_PKG_VERSION").to_string()
 }
 
+#[tauri::command]
+fn set_stealth_mode(app: AppHandle, state: tauri::State<Mutex<StealthManager>>, enabled: bool) {
+    state.lock().unwrap().set_capture(enabled);
+    
+    #[cfg(target_os = "windows")]
+    if enabled {
+        if let Some(window) = app.get_webview_window("main") {
+            let _ = window::apply_stealth_styles(&window);
+        }
+    }
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     // Get PostHog API key
     let posthog_api_key = option_env!("POSTHOG_API_KEY").unwrap_or("").to_string();
+    #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
         .plugin(
             tauri_plugin_sql::Builder::default()
@@ -70,6 +87,7 @@ pub fn run() {
     {
         builder = builder.plugin(tauri_nspanel::init());
     }
+    #[allow(unused_mut)]
     let mut builder = builder
         .invoke_handler(tauri::generate_handler![
             get_app_version,
@@ -112,8 +130,15 @@ pub fn run() {
             speaker::update_vad_config,
             speaker::get_capture_status,
             speaker::get_audio_sample_rate,
+            set_stealth_mode,
         ])
         .setup(|app| {
+            // Initialize Stealth Manager
+            let mut stealth_manager = StealthManager::new(app.handle().clone());
+            #[cfg(target_os = "windows")]
+            stealth_manager.start();
+            app.manage(Mutex::new(stealth_manager));
+
             // Setup main window positioning
             window::setup_main_window(app).expect("Failed to setup main window");
             #[cfg(target_os = "macos")]
