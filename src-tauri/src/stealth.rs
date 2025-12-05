@@ -8,6 +8,7 @@ use windows::Win32::Foundation::{LPARAM, LRESULT, WPARAM, HWND, POINT, RECT};
 use windows::Win32::UI::Input::KeyboardAndMouse::{
     VIRTUAL_KEY, VK_CONTROL, VK_LCONTROL, VK_LWIN, VK_MENU, VK_LMENU, VK_RMENU,
     VK_RCONTROL, VK_RWIN, VK_SHIFT, VK_LSHIFT, VK_RSHIFT,
+    VK_LEFT, VK_RIGHT, VK_UP, VK_DOWN, VK_PRIOR, VK_NEXT, VK_HOME, VK_END,
 };
 #[cfg(target_os = "windows")]
 use windows::Win32::UI::Input::KeyboardAndMouse::GetKeyState;
@@ -59,14 +60,31 @@ static EVENT_SENDER: OnceLock<Sender<StealthKeyEvent>> = OnceLock::new();
 
 #[cfg(target_os = "windows")]
 unsafe extern "system" fn keyboard_hook_proc(code: i32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
-    if code >= 0 && CAPTURE_ENABLED.load(Ordering::Relaxed) {
+    if code >= 0 {
         let kbd = *(lparam.0 as *const KBDLLHOOKSTRUCT);
         let vk_code = VIRTUAL_KEY(kbd.vkCode as u16);
-        let event_type = wparam.0 as u32;
+        
+        // Debug: Log navigation keys regardless of capture state
+        let is_nav_debug = matches!(
+            vk_code,
+            VK_LEFT | VK_RIGHT | VK_UP | VK_DOWN |
+            VK_PRIOR | VK_NEXT | VK_HOME | VK_END
+        );
+        if is_nav_debug {
+             let captured = CAPTURE_ENABLED.load(Ordering::Relaxed);
+             println!("Stealth Hook: Nav Key {:?} (Capture: {})", vk_code, captured);
+        }
+
+        if CAPTURE_ENABLED.load(Ordering::Relaxed) {
+            let event_type = wparam.0 as u32;
         
         // Removed blocking println!
         
         let is_keydown = event_type == WM_KEYDOWN || event_type == WM_SYSKEYDOWN;
+        
+        if CAPTURE_ENABLED.load(Ordering::Relaxed) {
+             // println!("Stealth Hook: Key {:?} Event {}", vk_code, event_type);
+        }
         
         // Determine if we should block this key
         let mut should_block = false;
@@ -145,8 +163,6 @@ unsafe extern "system" fn keyboard_hook_proc(code: i32, wparam: WPARAM, lparam: 
 
         // Emit event
         if let Some(sender) = EVENT_SENDER.get() {
-            // Debug logging for Enter key (13) removed to reduce noise
-
             let _ = sender.send(StealthKeyEvent {
                 key: format!("{:?}", vk_code), // Rough approximation
                 code: kbd.vkCode,
@@ -164,6 +180,7 @@ unsafe extern "system" fn keyboard_hook_proc(code: i32, wparam: WPARAM, lparam: 
         if should_block {
             return LRESULT(1); // Swallow event
         }
+    }
     }
     CallNextHookEx(KEYBOARD_HOOK, code, wparam, lparam)
 }
@@ -185,7 +202,8 @@ unsafe extern "system" fn mouse_hook_proc(code: i32, wparam: WPARAM, lparam: LPA
                 let inside = point.x >= rect.left && point.x < rect.right && 
                              point.y >= rect.top && point.y < rect.bottom;
 
-                // Removed blocking println! for mouse as well
+                // Debug mouse click
+                // println!("Stealth Mouse: Click at ({}, {}), Window Rect: {:?}, Inside: {}", point.x, point.y, rect, inside);
 
                 if !inside {
                     // Clicked outside -> Disable capture
