@@ -146,8 +146,13 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
       }
     });
 
+    const unlistenFocus = listen("focus-text-input", () => {
+      setStealthActive(true);
+    });
+
     return () => {
       unlisten.then((fn) => fn());
+      unlistenFocus.then((fn) => fn());
     };
   }, []);
 

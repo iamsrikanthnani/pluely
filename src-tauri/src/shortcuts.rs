@@ -614,7 +614,16 @@ fn handle_focus_input<R: Runtime>(app: &AppHandle<R>) {
             let _ = window.show();
         }
 
-        let _ = window.set_focus();
+        // Enable stealth mode directly to prevent detection and reduce latency
+        let state = app.state::<Mutex<crate::StealthManager>>();
+        if let Ok(mut manager) = state.lock() {
+            manager.set_capture(true);
+        }
+
+        #[cfg(target_os = "windows")]
+        let _ = crate::window::apply_stealth_styles(&window);
+
+        // Notify frontend to update UI (red ring)
         let _ = window.emit("focus-text-input", json!({}));
     }
 }

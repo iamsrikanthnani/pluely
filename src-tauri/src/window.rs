@@ -29,7 +29,7 @@ pub fn setup_main_window(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 }
 
 #[cfg(target_os = "windows")]
-pub fn apply_stealth_styles(window: &WebviewWindow) -> Result<(), Box<dyn std::error::Error>> {
+pub fn apply_stealth_styles<R: Runtime>(window: &WebviewWindow<R>) -> Result<(), Box<dyn std::error::Error>> {
     use windows::Win32::UI::WindowsAndMessaging::{
         GetWindowLongPtrW, SetWindowLongPtrW, GWL_EXSTYLE, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
         SetWindowPos, SWP_NOMOVE, SWP_NOSIZE, SWP_NOACTIVATE, SWP_FRAMECHANGED, HWND_TOPMOST
