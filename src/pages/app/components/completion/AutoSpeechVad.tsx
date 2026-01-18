@@ -5,7 +5,7 @@ import { LoaderCircleIcon, MicIcon, MicOffIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components";
 import { useApp } from "@/contexts";
-import { floatArrayToWav } from "@/lib/utils";
+import { floatArrayToWav, isFillerTranscription } from "@/lib/utils";
 import { shouldUsePluelyAPI } from "@/lib/functions/pluely.api";
 
 interface AutoSpeechVADProps {
@@ -75,7 +75,7 @@ const AutoSpeechVADInternal = ({
           audio: audioBlob,
         });
 
-        if (transcription) {
+        if (transcription && !isFillerTranscription(transcription)) {
           submit(transcription);
         }
       } catch (error) {

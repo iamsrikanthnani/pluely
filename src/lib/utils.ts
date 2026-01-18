@@ -46,3 +46,180 @@ export const floatArrayToWav = (
 
   return new Blob([buffer], { type: `audio/${format}` });
 };
+
+export interface FillerClassifierOptions {
+  minScore?: number;
+  treatContinueAsFiller?: boolean;
+}
+
+export interface FillerClassificationResult {
+  isFiller: boolean;
+  score: number;
+  reasons: string[];
+  normalized: string;
+  tokens: string[];
+}
+
+const COMMAND_TOKENS = new Set([
+  "open",
+  "search",
+  "summarize",
+  "send",
+  "stop",
+  "pause",
+  "resume",
+  "cancel",
+  "undo",
+  "redo",
+  "new",
+  "save",
+  "delete",
+  "start",
+  "end",
+  "record",
+  "listen",
+  "copy",
+  "paste",
+  "translate",
+]);
+
+const NON_FILLER_SHORT = new Set(["yes", "no", "yep", "nope", "yeah"]);
+
+const FILLER_TOKENS = new Set([
+  "mm",
+  "mmm",
+  "hmm",
+  "hm",
+  "uh",
+  "uhhuh",
+  "um",
+  "er",
+  "ah",
+  "ok",
+  "okay",
+  "k",
+  "continue",
+  "go",
+  "on",
+  "right",
+  "sure",
+  "alright",
+  "all",
+]);
+
+const FILLER_PHRASES = new Set([
+  "mm",
+  "mmm",
+  "mm hmm",
+  "hmm",
+  "hm",
+  "uh",
+  "uh huh",
+  "uhhuh",
+  "um",
+  "er",
+  "ah",
+  "ok",
+  "okay",
+  "k",
+  "continue",
+  "go on",
+  "right",
+  "sure",
+  "alright",
+  "all right",
+]);
+
+const normalizeTranscription = (input: string) =>
+  input
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const tokenize = (input: string) => input.split(" ").filter(Boolean);
+
+export const classifyFillerTranscription = (
+  input: string,
+  options: FillerClassifierOptions = {}
+): FillerClassificationResult => {
+  const minScore = options.minScore ?? 3;
+  const normalized = normalizeTranscription(input);
+  const tokens = tokenize(normalized);
+  const reasons: string[] = [];
+  let score = 0;
+
+  if (!normalized) {
+    return { isFiller: false, score, reasons, normalized, tokens };
+  }
+
+  if (tokens.some((token) => COMMAND_TOKENS.has(token))) {
+    return {
+      isFiller: false,
+      score,
+      reasons: ["contains-command-token"],
+      normalized,
+      tokens,
+    };
+  }
+
+  if (tokens.some((token) => NON_FILLER_SHORT.has(token))) {
+    return {
+      isFiller: false,
+      score,
+      reasons: ["contains-non-filler-ack"],
+      normalized,
+      tokens,
+    };
+  }
+
+  if (!options.treatContinueAsFiller) {
+    if (tokens.includes("continue")) {
+      return {
+        isFiller: false,
+        score,
+        reasons: ["continue-treated-as-command"],
+        normalized,
+        tokens,
+      };
+    }
+  }
+
+  if (FILLER_PHRASES.has(normalized)) {
+    score += 3;
+    reasons.push("exact-filler-phrase");
+  }
+
+  if (tokens.length <= 2) {
+    score += 1;
+    reasons.push("short-utterance");
+  }
+
+  if (tokens.length > 0 && tokens.every((token) => FILLER_TOKENS.has(token))) {
+    score += 2;
+    reasons.push("all-filler-tokens");
+  }
+
+  if (normalized.length <= 6) {
+    score += 1;
+    reasons.push("very-short-text");
+  }
+
+  if (tokens.some((token) => /^(m+|h+|um+|uh+)$/.test(token))) {
+    score += 1;
+    reasons.push("phonetic-repetition");
+  }
+
+  const uniqueTokens = new Set(tokens);
+  if (tokens.length > 0 && uniqueTokens.size / tokens.length <= 0.5) {
+    score += 1;
+    reasons.push("low-token-variety");
+  }
+
+  return { isFiller: score >= minScore, score, reasons, normalized, tokens };
+};
+
+export const isFillerTranscription = (input: string): boolean => {
+  return classifyFillerTranscription(input, { treatContinueAsFiller: true })
+    .isFiller;
+};

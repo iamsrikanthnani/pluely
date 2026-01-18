@@ -18,6 +18,7 @@ import {
   generateConversationId,
   generateMessageId,
 } from "@/lib";
+import { isFillerTranscription } from "@/lib/utils";
 import { Message } from "@/types/completion";
 
 // VAD Configuration interface matching Rust
@@ -273,6 +274,10 @@ export function useSystemAudio() {
               ]);
 
               if (transcription.trim()) {
+                if (isFillerTranscription(transcription)) {
+                  return;
+                }
+
                 setLastTranscription(transcription);
                 setError("");
 
