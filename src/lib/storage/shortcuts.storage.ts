@@ -246,14 +246,12 @@ export const formatShortcutKeyForDisplay = (key: string): string => {
 /**
  * Get all available actions (default + custom)
  */
-export const getAllShortcutActions = (
-  hasLicense: boolean
-): ShortcutAction[] => {
+export const getAllShortcutActions = (): ShortcutAction[] => {
   const config = getShortcutsConfig();
   const actions = [...DEFAULT_SHORTCUT_ACTIONS];
 
-  // Add custom actions if user has license
-  if (hasLicense && config.customActions) {
+  // Add custom actions
+  if (config.customActions) {
     actions.push(...config.customActions);
   }
 
@@ -261,7 +259,7 @@ export const getAllShortcutActions = (
 };
 
 /**
- * Add a custom shortcut action (license required)
+ * Add a custom shortcut action
  */
 export const addCustomShortcutAction = (
   action: ShortcutAction

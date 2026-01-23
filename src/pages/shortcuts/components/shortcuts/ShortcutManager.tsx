@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Button, Card, GetLicense, Switch } from "@/components";
-import { RotateCcw, AlertCircle, Keyboard, Lock } from "lucide-react";
+import { Button, Card, Switch } from "@/components";
+import { RotateCcw, AlertCircle, Keyboard } from "lucide-react";
 import {
   getAllShortcutActions,
   getShortcutsConfig,
@@ -12,11 +12,9 @@ import {
 } from "@/lib";
 import { ShortcutAction, ShortcutBinding } from "@/types";
 import { invoke } from "@tauri-apps/api/core";
-import { useApp } from "@/contexts";
 import { ShortcutRecorder } from "./ShortcutRecorder";
 
 export const ShortcutManager = () => {
-  const { hasActiveLicense } = useApp();
   const [actions, setActions] = useState<ShortcutAction[]>([]);
   const [bindings, setBindings] = useState<Record<string, ShortcutBinding>>({});
   const [editingAction, setEditingAction] = useState<string | null>(null);
@@ -25,13 +23,29 @@ export const ShortcutManager = () => {
 
   useEffect(() => {
     loadShortcuts();
-  }, [hasActiveLicense]);
+  }, []);
 
   const loadShortcuts = () => {
     const config = getShortcutsConfig();
-    const allActions = getAllShortcutActions(hasActiveLicense);
+    const allActions = getAllShortcutActions();
     setActions(allActions);
     setBindings(config.bindings);
+  };
+
+  const applyShortcuts = async (
+    updatedBindings: Record<string, ShortcutBinding>
+  ) => {
+    setIsApplying(true);
+    try {
+      await invoke("update_shortcuts", {
+        config: { bindings: updatedBindings },
+      });
+    } catch (error) {
+      console.error("Failed to apply shortcuts:", error);
+      setConflicts([`Failed to apply shortcuts: ${error}`]);
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   const handleToggleEnabled = async (actionId: string, enabled: boolean) => {
@@ -42,15 +56,11 @@ export const ShortcutManager = () => {
     const updatedBindings = { ...bindings, [actionId]: newBinding };
     setBindings(updatedBindings);
 
-    // Update storage
     updateShortcutBinding(actionId, binding.key, enabled);
-
-    // Apply to backend
     await applyShortcuts(updatedBindings);
   };
 
   const handleSaveShortcut = async (actionId: string, key: string) => {
-    // Check for conflicts
     const conflict = checkShortcutConflicts(key, actionId);
     if (conflict) {
       setConflicts([
@@ -70,31 +80,11 @@ export const ShortcutManager = () => {
     const updatedBindings = { ...bindings, [actionId]: newBinding };
     setBindings(updatedBindings);
 
-    // Update storage
     updateShortcutBinding(actionId, key, binding.enabled);
-
-    // Apply to backend
     await applyShortcuts(updatedBindings);
 
-    // Close editor and clear conflicts
     setEditingAction(null);
     setConflicts([]);
-  };
-
-  const applyShortcuts = async (
-    updatedBindings: Record<string, ShortcutBinding>
-  ) => {
-    setIsApplying(true);
-    try {
-      await invoke("update_shortcuts", {
-        config: { bindings: updatedBindings },
-      });
-    } catch (error) {
-      console.error("Failed to apply shortcuts:", error);
-      setConflicts([`Failed to apply shortcuts: ${error}`]);
-    } finally {
-      setIsApplying(false);
-    }
   };
 
   const handleReset = async () => {
@@ -108,7 +98,6 @@ export const ShortcutManager = () => {
       setConflicts([]);
       setEditingAction(null);
 
-      // Reload to ensure fresh state
       loadShortcuts();
     } catch (error) {
       console.error("Failed to reset shortcuts:", error);
@@ -120,7 +109,6 @@ export const ShortcutManager = () => {
 
   return (
     <div id="shortcuts" className="space-y-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-md lg:text-lg font-semibold flex items-center gap-2">
@@ -128,25 +116,10 @@ export const ShortcutManager = () => {
             Keyboard Shortcuts
           </h3>
           <p className="text-sm text-muted-foreground">
-            {actions.length} shortcut{actions.length !== 1 ? "s" : ""}{" "}
-            configured
-            {!hasActiveLicense && " • Get a license to customize shortcuts"}
+            {actions.length} shortcut{actions.length !== 1 ? "s" : ""} configured
           </p>
         </div>
         <div className="flex gap-2">
-          {/* COMMENTED OUT: Custom shortcut creation */}
-          {/* {hasActiveLicense && (
-            <Button
-              size="sm"
-              variant="default"
-              onClick={() => setIsCreatingNew(!isCreatingNew)}
-              disabled={isApplying}
-              title="Create custom shortcut"
-            >
-              <Plus className="h-4 w-4" />
-              New
-            </Button>
-          )} */}
           <Button
             size="sm"
             variant="outline"
@@ -160,7 +133,6 @@ export const ShortcutManager = () => {
         </div>
       </div>
 
-      {/* Conflicts Alert */}
       {conflicts.length > 0 && (
         <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md">
           <div className="flex items-start gap-2">
@@ -176,29 +148,6 @@ export const ShortcutManager = () => {
         </div>
       )}
 
-      {/* License Prompt for Non-Licensed Users */}
-      {!hasActiveLicense && (
-        <Card className="p-4 bg-primary/5 border-primary/20">
-          <div className="flex items-start gap-3">
-            <Lock className="size-4 lg:size-5 text-primary mt-0.5" />
-            <div className="flex-1 space-y-2">
-              <p className="text-xs lg:text-sm font-medium">
-                Unlock Shortcut Customization
-              </p>
-              <p className="text-[10px] lg:text-xs text-muted-foreground">
-                You can enable/disable shortcuts, but need a active license to
-                customize the key bindings.
-              </p>
-              <GetLicense
-                buttonText="Get License"
-                buttonClassName="w-full mt-2"
-              />
-            </div>
-          </div>
-        </Card>
-      )}
-
-      {/* Flat Shortcuts List */}
       <div className="space-y-3">
         {actions.map((action) => {
           const binding = bindings[action.id] || {
@@ -206,7 +155,6 @@ export const ShortcutManager = () => {
             key: getPlatformDefaultKey(action),
             enabled: true,
           };
-          const isLocked = !hasActiveLicense;
           const isEditing = editingAction === action.id;
 
           return (
@@ -214,10 +162,9 @@ export const ShortcutManager = () => {
               key={action.id}
               className={`shadow-none p-4 border border-border/70 rounded-xl ${
                 !binding.enabled ? "opacity-50" : ""
-              } ${isLocked ? "bg-muted/30" : ""}`}
+              }`}
             >
               {isEditing ? (
-                // EDITING MODE - Show recorder immediately
                 <div className="space-y-3">
                   <div>
                     <p className="font-medium text-xs lg:text-sm">
@@ -229,7 +176,7 @@ export const ShortcutManager = () => {
                   </div>
                   <ShortcutRecorder
                     actionId={action.id}
-                    onSave={(key) => handleSaveShortcut(action.id, key)}
+                    onSave={(nextKey) => handleSaveShortcut(action.id, nextKey)}
                     onCancel={() => {
                       setEditingAction(null);
                       setConflicts([]);
@@ -238,7 +185,6 @@ export const ShortcutManager = () => {
                   />
                 </div>
               ) : (
-                // VIEW MODE - Show shortcut with controls
                 <div className="flex items-center gap-3">
                   <div className="flex items-center">
                     <Switch
@@ -255,9 +201,6 @@ export const ShortcutManager = () => {
                       <p className="font-medium text-xs lg:text-sm">
                         {action.name}
                       </p>
-                      {isLocked && (
-                        <Lock className="size-3 lg:size-4 text-muted-foreground" />
-                      )}
                     </div>
                     <p className="text-[10px] lg:text-xs text-muted-foreground">
                       {action.description}
@@ -269,24 +212,19 @@ export const ShortcutManager = () => {
                       {action.id === "move_window"
                         ? `${formatShortcutKeyForDisplay(
                             binding.key
-                          )} + (← ↑ ↓ →)`
+                          )} + (←↑→↓)`
                         : formatShortcutKeyForDisplay(binding.key)}
                     </code>
                     <Button
                       size="sm"
-                      variant={isLocked ? "outline" : "default"}
+                      variant="default"
                       onClick={() => {
-                        if (isLocked) return;
                         setEditingAction(action.id);
                         setConflicts([]);
                       }}
-                      disabled={isLocked || isApplying}
+                      disabled={isApplying}
                       className="min-w-[80px]"
-                      title={
-                        isLocked
-                          ? "License required to customize"
-                          : "Change this shortcut"
-                      }
+                      title="Change this shortcut"
                     >
                       Change
                     </Button>
@@ -298,9 +236,8 @@ export const ShortcutManager = () => {
         })}
       </div>
 
-      {/* Footer Note */}
       <p className="text-xs text-muted-foreground text-center pt-2">
-        💡 Shortcuts work globally, even when the app is hidden
+        Shortcuts work globally, even when the app is hidden
       </p>
     </div>
   );

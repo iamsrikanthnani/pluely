@@ -1,4 +1,4 @@
-import { Card, Updater, DragButton, CustomCursor, Button } from "@/components";
+import { Card, DragButton, CustomCursor, Button } from "@/components";
 import {
   SystemAudio,
   Completion,
@@ -78,7 +78,6 @@ const App = () => {
             </Button>
           </div>
 
-          <Updater />
           <DragButton />
         </Card>
         {customizable.cursor.type === "invisible" && platform !== "linux" ? (

@@ -1,4 +1,4 @@
-// Pluely windows speaker input and stream
+// Nluely windows speaker input and stream
 use super::AudioDevice;
 use anyhow::Result;
 use futures_util::Stream;
@@ -139,18 +139,18 @@ impl SpeakerInput {
             if let Err(e) =
                 SpeakerStream::capture_audio_loop(queue_clone, waker_clone, init_tx, device_id)
             {
-                error!("Pluely Audio capture loop failed: {}", e);
+                error!("Nluely Audio capture loop failed: {}", e);
             }
         });
 
         let actual_sample_rate = match init_rx.recv_timeout(Duration::from_secs(5)) {
             Ok(Ok(rate)) => rate,
             Ok(Err(e)) => {
-                error!("Pluely Audio initialization failed: {}", e);
+                error!("Nluely Audio initialization failed: {}", e);
                 44100
             }
             Err(_) => {
-                error!("Pluely Audio initialization timeout");
+                error!("Nluely Audio initialization timeout");
                 44100
             }
         };
@@ -246,13 +246,13 @@ impl SpeakerStream {
                     }
 
                     if h_event.wait_for_event(3000).is_err() {
-                        error!("Pluely timeout error, stopping capture");
+                        error!("Nluely timeout error, stopping capture");
                         break;
                     }
 
                     let mut temp_queue = VecDeque::new();
                     if let Err(e) = render_client.read_from_device_to_deque(&mut temp_queue) {
-                        error!("Pluely Failed to read audio data: {}", e);
+                        error!("Nluely Failed to read audio data: {}", e);
                         continue;
                     }
 

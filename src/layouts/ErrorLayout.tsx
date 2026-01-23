@@ -26,7 +26,7 @@ export const ErrorLayout = ({ isCompact }: { isCompact?: boolean }) => {
             <div className="flex size-6 items-center justify-center rounded-lg bg-foreground">
               <SparklesIcon className="size-4 text-background" />
             </div>
-            <h1 className="text-md font-semibold text-foreground">Pluely</h1>
+            <h1 className="text-md font-semibold text-foreground">Nluely</h1>
           </div>
         </div>
 

@@ -157,7 +157,7 @@ export function useHistory(): UseHistoryReturn {
   const handleAttachToOverlay = (conversationId: string) => {
     // Use localStorage to communicate between windows
     localStorage.setItem(
-      "pluely-conversation-selected",
+      "nluely-conversation-selected",
       JSON.stringify({ id: conversationId, timestamp: Date.now() })
     );
     setIsAttached(true);

@@ -15,12 +15,10 @@ export const ScreenshotConfigs = ({
   handleScreenshotModeChange,
   handleScreenshotPromptChange,
   handleScreenshotEnabledChange,
-  hasActiveLicense,
 }: UseSettingsReturn) => {
   return (
     <div id="screenshot" className="space-y-3">
       <div className="space-y-3">
-        {/* Screenshot Capture Mode: Selection and Screenshot */}
         <div className="space-y-2">
           <div className="flex flex-col">
             <Header
@@ -53,15 +51,10 @@ export const ScreenshotConfigs = ({
               </div>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="selection" disabled={!hasActiveLicense}>
+              <SelectItem value="selection">
                 <div className="flex items-center gap-2">
                   <MousePointer2Icon className="size-4" />
                   <div className="font-medium">Selection Mode</div>
-                  {!hasActiveLicense && (
-                    <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
-                      You need an active license to use Selection Mode.
-                    </span>
-                  )}
                 </div>
               </SelectItem>
               <SelectItem value="screenshot" className="flex flex-row gap-2">
@@ -72,7 +65,6 @@ export const ScreenshotConfigs = ({
           </Select>
         </div>
 
-        {/* Mode Selection: Auto and Manual */}
         <div className="space-y-2">
           <div className="flex flex-col">
             <Header
@@ -107,7 +99,6 @@ export const ScreenshotConfigs = ({
           </Select>
         </div>
 
-        {/* Auto Prompt Input - Only show when auto mode is selected */}
         {screenshotConfiguration.mode === "auto" && (
           <div className="space-y-2">
             <Label className="text-sm font-medium">Auto Prompt</Label>
@@ -118,22 +109,10 @@ export const ScreenshotConfigs = ({
               className="w-full h-11 border-1 border-input/50 focus:border-primary/50 transition-colors"
             />
             <p className="text-xs text-muted-foreground">
-              This prompt will be used automatically when screenshots are taken
+              This prompt will be used to automatically analyze screenshots.
             </p>
           </div>
         )}
-      </div>
-
-      {/* Tips */}
-      <div className="text-xs text-muted-foreground/70">
-        <p>
-          💡 <strong>Tip:</strong>{" "}
-          {screenshotConfiguration.enabled
-            ? "Screenshot mode captures the full screen with one click."
-            : "Selection mode lets you choose specific areas to capture."}{" "}
-          Auto mode is great for quick analysis, manual mode gives you more
-          control.
-        </p>
       </div>
     </div>
   );

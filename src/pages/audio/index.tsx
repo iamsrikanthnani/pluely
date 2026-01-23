@@ -50,7 +50,7 @@ const Audio = () => {
         </p>
         <p className="text-amber-600/80">
           <strong>Note:</strong> If the selected device fails or is unavailable,
-          Pluely will automatically fall back to your system's default audio
+          Nluely will automatically fall back to your system's default audio
           devices.
         </p>
       </div>

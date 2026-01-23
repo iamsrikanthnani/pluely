@@ -1,4 +1,4 @@
-// Pluely linux speaker input and stream
+// Nluely linux speaker input and stream
 use super::AudioDevice;
 use anyhow::{anyhow, Result};
 use futures_util::Stream;
@@ -28,7 +28,7 @@ pub fn get_input_devices() -> Result<Vec<AudioDevice>> {
 
     let mut mainloop =
         Mainloop::new().ok_or_else(|| anyhow!("Failed to create PulseAudio mainloop"))?;
-    let mut context = Context::new(&mainloop, "pluely-device-enum")
+    let mut context = Context::new(&mainloop, "nluely-device-enum")
         .ok_or_else(|| anyhow!("Failed to create PulseAudio context"))?;
 
     context
@@ -127,7 +127,7 @@ pub fn get_output_devices() -> Result<Vec<AudioDevice>> {
 
     let mut mainloop =
         Mainloop::new().ok_or_else(|| anyhow!("Failed to create PulseAudio mainloop"))?;
-    let mut context = Context::new(&mainloop, "pluely-device-enum")
+    let mut context = Context::new(&mainloop, "nluely-device-enum")
         .ok_or_else(|| anyhow!("Failed to create PulseAudio context"))?;
 
     context
@@ -338,7 +338,7 @@ impl SpeakerStream {
         let init_result: Result<(Simple, u32)> = (|| {
             let simple = Simple::new(
                 None,                    // Use default server
-                "pluely",                // Application name
+                "nluely",                // Application name
                 Direction::Record,       // Record direction
                 final_source.as_deref(), // Source name (monitor)
                 "System Audio Capture",  // Stream description

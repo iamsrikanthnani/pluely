@@ -29,17 +29,6 @@ export const MESSAGE_ID_OFFSET = 1;
 export const CONVERSATION_SAVE_DEBOUNCE_MS = 500;
 
 /**
- * CHUNK_POLL_INTERVAL_MS
- *
- * How frequently to check for new streaming chunks from Pluely API.
- *
- * 50ms provides smooth streaming without excessive CPU usage.
- * Lower = more responsive but higher CPU usage
- * Higher = lower CPU but choppier streaming
- */
-export const CHUNK_POLL_INTERVAL_MS = 50;
-
-/**
  * DOWNLOAD_SUCCESS_DISPLAY_MS
  *
  * How long to show the "Downloaded successfully" checkmark/indicator
