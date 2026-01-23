@@ -48,13 +48,6 @@ jobs:
             libayatana-appindicator3-dev ca-certificates binutils
           sudo update-ca-certificates -f
 
-      - name: Create environment file
-        run: |
-          echo "API_ACCESS_KEY=${{ secrets.API_ACCESS_KEY }}" > src-tauri/.env
-          echo "PAYMENT_ENDPOINT=${{ secrets.PAYMENT_ENDPOINT }}" >> src-tauri/.env
-          echo "APP_ENDPOINT=${{ secrets.APP_ENDPOINT }}" >> src-tauri/.env
-          echo "POSTHOG_API_KEY=${{ secrets.POSTHOG_API_KEY }}" >> src-tauri/.env
-
       - name: Install frontend deps
         run: npm ci
 
@@ -62,18 +55,10 @@ jobs:
         uses: tauri-apps/tauri-action@v0.5.16
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
-          API_ACCESS_KEY: ${{ secrets.API_ACCESS_KEY }}
-          PAYMENT_ENDPOINT: ${{ secrets.PAYMENT_ENDPOINT }}
-          APP_ENDPOINT: ${{ secrets.APP_ENDPOINT }}
-          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
         with:
           tagName: app-v__VERSION__
-          releaseName: "Pluely v__VERSION__"
-          releaseBody: "Download binaries for your OS. macOS users: If blocked, go to System Settings > Privacy & Security > Security section, find 'pluely was blocked' message, click 'Allow Anyway', then reopen the app."
+          releaseName: "Nluely v__VERSION__"
+          releaseBody: "Download binaries for your OS. macOS users: If blocked, go to System Settings > Privacy & Security > Security section, find 'nluely was blocked' message, click 'Allow Anyway', then reopen the app."
           releaseDraft: true
           prerelease: false
-          includeUpdaterJson: true
-          updaterJsonPreferNsis: true
           args: ${{ matrix.args }}

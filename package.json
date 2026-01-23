@@ -1,5 +1,5 @@
 {
-  "name": "pluely",
+  "name": "nluely",
   "private": false,
   "version": "0.1.9",
   "description": "The Open Source Alternative to Cluely - A lightning-fast, privacy-first AI assistant that works seamlessly during meetings, interviews, and conversations without anyone knowing.",
@@ -9,14 +9,6 @@
     "url": "https://www.srikanthnani.com"
   },
   "license": "GPL-3.0",
-  "homepage": "https://github.com/iamsrikanthnani/pluely#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/iamsrikanthnani/pluely.git"
-  },
-  "bugs": {
-    "url": "https://github.com/iamsrikanthnani/pluely/issues"
-  },
   "keywords": [
     "ai-assistant",
     "tauri",
@@ -36,6 +28,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "check:no-pluely": "node scripts/no-pluely-check.js",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri"
@@ -61,7 +54,6 @@
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-process": "^2.3.0",
     "@tauri-apps/plugin-sql": "^2.3.0",
-    "@tauri-apps/plugin-updater": "^2.9.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -79,9 +71,7 @@
     "streamdown": "^1.6.10",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.12",
-    "tauri-plugin-keychain": "^2.0.1",
-    "tauri-plugin-macos-permissions-api": "^2.3.0",
-    "tauri-plugin-posthog-api": "^0.2.2"
+    "tauri-plugin-macos-permissions-api": "^2.3.0"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

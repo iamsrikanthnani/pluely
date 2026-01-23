@@ -4,15 +4,15 @@
 <dict>
   <!-- Microphone Access - Only for voice input, NOT for system audio capture -->
   <key>NSMicrophoneUsageDescription</key>
-  <string>Pluely needs access to your microphone for voice input functionality. System audio capture uses virtual audio devices and does not access your microphone.</string>
+  <string>Nluely needs access to your microphone for voice input functionality. System audio capture uses virtual audio devices and does not access your microphone.</string>
   
   <!-- Screen Capture -->
   <key>NSScreenCaptureUsageDescription</key>
-  <string>Pluely needs access to screen capture for screenshot functionality</string>
+  <string>Nluely needs access to screen capture for screenshot functionality</string>
   
   <!-- System Audio -->
   <key>NSAudioCaptureUsageDescription</key>
-  <string>Pluely needs access to system audio to process transcription and AI responses.</string>
+  <string>Nluely needs access to system audio to process transcription and AI responses.</string>
 
   <!-- Privacy - Audio Processing -->
   <key>NSPrivacyAccessedAPITypes</key>

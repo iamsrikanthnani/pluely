@@ -11,7 +11,7 @@ body:
 
         **Before submitting:**
         - [x] I have searched for similar issues and didn't find a duplicate
-        - [x] I have tried the latest version of Pluely
+        - [x] I have tried the latest version of Nluely
 
   - type: dropdown
     id: platform
@@ -28,8 +28,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: Pluely Version
-      description: What version of Pluely are you using?
+      label: Nluely Version
+      description: What version of Nluely are you using?
       placeholder: "e.g., 0.1.3"
     validations:
       required: true
