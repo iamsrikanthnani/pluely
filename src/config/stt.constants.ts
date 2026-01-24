@@ -35,11 +35,14 @@ export const SPEECH_TO_TEXT_PROVIDERS = [
   {
     id: "google-stt",
     name: "Google Speech-to-Text",
-    curl: `curl -X POST "https://speech.googleapis.com/v1/speech:recognize?key={{API_KEY}}" \\
+    curl: `curl -X POST "https://speech.googleapis.com/v1/speech:recognize" \\
+      -H "Authorization: Bearer {{API_KEY}}" \\
       -H "Content-Type: application/json" \\
+      -H "x-goog-user-project: {{PROJECT_ID}}" \\
       -d '{
         "config": {
           "encoding": "LINEAR16", 
+          "sampleRateHertz": 16000,
           "languageCode": "en-US"
         },
         "audio": {
