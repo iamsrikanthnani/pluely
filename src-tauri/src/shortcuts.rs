@@ -4,11 +4,21 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::image::Image as TauriImage;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut};
 use tokio::time::{sleep, Duration};
+use base64::{engine::general_purpose, Engine as _};
 
 #[cfg(target_os = "macos")]
 use tauri_nspanel::ManagerExt;
+#[cfg(target_os = "macos")]
+use objc2::AnyThread;
+#[cfg(target_os = "macos")]
+use objc2::MainThreadMarker;
+#[cfg(target_os = "macos")]
+use objc2_app_kit::{NSApplication, NSImage};
+#[cfg(target_os = "macos")]
+use objc2_foundation::NSData;
 
 use crate::window::show_dashboard_window;
 // State for window visibility
@@ -554,6 +564,54 @@ pub fn set_app_icon_visibility<R: Runtime>(app: AppHandle<R>, visible: bool) -> 
         } else {
             eprintln!("Main window not found on Linux");
         }
+    }
+
+    Ok(())
+}
+
+/// Tauri command to set app icon (dock/taskbar)
+#[tauri::command]
+pub fn set_app_icon<R: Runtime>(app: AppHandle<R>, png_base64: String) -> Result<(), String> {
+    let cleaned = png_base64
+        .split(',')
+        .last()
+        .unwrap_or(png_base64.as_str())
+        .trim();
+    let bytes = general_purpose::STANDARD
+        .decode(cleaned)
+        .map_err(|e| format!("Failed to decode icon base64: {}", e))?;
+
+    let image = image::load_from_memory(&bytes)
+        .map_err(|e| format!("Failed to decode icon image: {}", e))?;
+    let rgba = image.to_rgba8();
+    let (width, height) = rgba.dimensions();
+    let icon = TauriImage::new_owned(rgba.into_raw(), width, height);
+
+    for (label, window) in app.webview_windows() {
+        if let Err(e) = window.set_icon(icon.clone()) {
+            eprintln!("Failed to set window icon for '{}': {}", label, e);
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let bytes_for_app = bytes.clone();
+        app.run_on_main_thread(move || {
+            let mtm = MainThreadMarker::new().expect("App icon update must run on main thread");
+            let data = NSData::with_bytes(&bytes_for_app);
+            let image = NSImage::initWithData(NSImage::alloc(), &data);
+            if let Some(image) = image {
+                let app = NSApplication::sharedApplication(mtm);
+                unsafe {
+                    app.setApplicationIconImage(Some(&image));
+                    let dock_tile = app.dockTile();
+                    dock_tile.display();
+                }
+            } else {
+                eprintln!("Failed to create NSImage from icon data");
+            }
+        })
+        .map_err(|e| format!("Failed to set macOS dock icon: {}", e))?;
     }
 
     Ok(())

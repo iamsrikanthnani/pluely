@@ -87,6 +87,7 @@ pub fn run() {
             shortcuts::validate_shortcut_key,
             shortcuts::set_license_status,
             shortcuts::set_app_icon_visibility,
+            shortcuts::set_app_icon,
             shortcuts::set_always_on_top,
             shortcuts::exit_app,
             activate::activate_license_api,

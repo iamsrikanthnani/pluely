@@ -57,6 +57,9 @@ tauri-plugin-machine-uid = "0.1.2"
 tauri-plugin-macos-permissions = "2"
 cidre = "0.11.3"
 tauri-nspanel = { git = "https://github.com/ahkohd/tauri-nspanel", branch = "v2" }
+objc2 = "0.6.2"
+objc2-app-kit = { version = "0.3.1", features = ["NSApplication", "NSImage", "NSDockTile"] }
+objc2-foundation = { version = "0.3.1", features = ["NSData"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]
 wasapi = "0.19.0"
