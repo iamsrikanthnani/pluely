@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from "react";
 import { ScreenshotConfig, TYPE_PROVIDER } from "@/types";
 import { CursorType, CustomizableState } from "@/lib/storage";
+import type { AppIconId } from "@/lib/app-icons";
 
 export type IContextType = {
   systemPrompt: string;
@@ -37,6 +38,7 @@ export type IContextType = {
   >;
   customizable: CustomizableState;
   toggleAppIconVisibility: (isVisible: boolean) => Promise<void>;
+  setAppIconSelection: (selected: AppIconId) => void;
   toggleAlwaysOnTop: (isEnabled: boolean) => Promise<void>;
   toggleAutostart: (isEnabled: boolean) => Promise<void>;
   loadData: () => void;

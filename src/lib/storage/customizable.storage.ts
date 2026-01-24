@@ -1,10 +1,12 @@
 import { STORAGE_KEYS } from "@/config";
+import type { AppIconId } from "@/lib/app-icons";
 
 export type CursorType = "invisible" | "default" | "auto";
 
 export interface CustomizableState {
   appIcon: {
     isVisible: boolean;
+    selected: AppIconId;
   };
   alwaysOnTop: {
     isEnabled: boolean;
@@ -18,7 +20,7 @@ export interface CustomizableState {
 }
 
 export const DEFAULT_CUSTOMIZABLE_STATE: CustomizableState = {
-  appIcon: { isVisible: true },
+  appIcon: { isVisible: true, selected: "sparkles" },
   alwaysOnTop: { isEnabled: false },
   autostart: { isEnabled: true },
   cursor: { type: "invisible" },
@@ -36,12 +38,29 @@ export const getCustomizableState = (): CustomizableState => {
 
     const parsedState = JSON.parse(stored);
 
+    const appIcon =
+      typeof parsedState.appIcon === "object" && parsedState.appIcon !== null
+        ? parsedState.appIcon
+        : {};
+    const alwaysOnTop =
+      typeof parsedState.alwaysOnTop === "object" &&
+      parsedState.alwaysOnTop !== null
+        ? parsedState.alwaysOnTop
+        : {};
+    const autostart =
+      typeof parsedState.autostart === "object" && parsedState.autostart !== null
+        ? parsedState.autostart
+        : {};
+    const cursor =
+      typeof parsedState.cursor === "object" && parsedState.cursor !== null
+        ? parsedState.cursor
+        : {};
+
     return {
-      appIcon: parsedState.appIcon || DEFAULT_CUSTOMIZABLE_STATE.appIcon,
-      alwaysOnTop:
-        parsedState.alwaysOnTop || DEFAULT_CUSTOMIZABLE_STATE.alwaysOnTop,
-      autostart: parsedState.autostart || DEFAULT_CUSTOMIZABLE_STATE.autostart,
-      cursor: parsedState.cursor || DEFAULT_CUSTOMIZABLE_STATE.cursor,
+      appIcon: { ...DEFAULT_CUSTOMIZABLE_STATE.appIcon, ...appIcon },
+      alwaysOnTop: { ...DEFAULT_CUSTOMIZABLE_STATE.alwaysOnTop, ...alwaysOnTop },
+      autostart: { ...DEFAULT_CUSTOMIZABLE_STATE.autostart, ...autostart },
+      cursor: { ...DEFAULT_CUSTOMIZABLE_STATE.cursor, ...cursor },
     };
   } catch (error) {
     console.error("Failed to get customizable state:", error);
@@ -67,7 +86,25 @@ export const updateAppIconVisibility = (
   isVisible: boolean
 ): CustomizableState => {
   const currentState = getCustomizableState();
-  const newState = { ...currentState, appIcon: { isVisible } };
+  const newState = {
+    ...currentState,
+    appIcon: { ...currentState.appIcon, isVisible },
+  };
+  setCustomizableState(newState);
+  return newState;
+};
+
+/**
+ * Update app icon selection
+ */
+export const updateAppIconSelection = (
+  selected: AppIconId
+): CustomizableState => {
+  const currentState = getCustomizableState();
+  const newState = {
+    ...currentState,
+    appIcon: { ...currentState.appIcon, selected },
+  };
   setCustomizableState(newState);
   return newState;
 };

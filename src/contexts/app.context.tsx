@@ -10,6 +10,7 @@ import {
   getCustomizableState,
   setCustomizableState,
   updateAppIconVisibility,
+  updateAppIconSelection,
   updateAlwaysOnTop,
   updateAutostart,
   CustomizableState,
@@ -17,6 +18,7 @@ import {
   CursorType,
   updateCursorType,
 } from "@/lib/storage";
+import type { AppIconId } from "@/lib/app-icons";
 import { IContextType, ScreenshotConfig, TYPE_PROVIDER } from "@/types";
 import curl2Json from "@bany/curl-to-json";
 import { invoke } from "@tauri-apps/api/core";
@@ -368,6 +370,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     applyCustomizableSettings();
   }, [customizable]);
 
+  // App icon swapping is triggered explicitly from the App Icon page to surface errors.
+
   useEffect(() => {
     const initializeAutostart = async () => {
       try {
@@ -579,6 +583,11 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const setAppIconSelection = (selected: AppIconId) => {
+    const newState = updateAppIconSelection(selected);
+    setCustomizable(newState);
+  };
+
   const toggleAlwaysOnTop = async (isEnabled: boolean) => {
     const newState = updateAlwaysOnTop(isEnabled);
     setCustomizable(newState);
@@ -668,6 +677,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     setScreenshotConfiguration,
     customizable,
     toggleAppIconVisibility,
+    setAppIconSelection,
     toggleAlwaysOnTop,
     toggleAutostart,
     loadData,

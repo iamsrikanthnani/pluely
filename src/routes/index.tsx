@@ -5,6 +5,7 @@ import {
   SystemPrompts,
   ViewChat,
   Settings,
+  AppIcon,
   DevSpace,
   Shortcuts,
   Audio,
@@ -27,6 +28,7 @@ export default function AppRoutes() {
           <Route path="/shortcuts" element={<Shortcuts />} />
           <Route path="/screenshot" element={<Screenshot />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/app-icon" element={<AppIcon />} />
           <Route path="/audio" element={<Audio />} />
           <Route path="/responses" element={<Responses />} />
           <Route path="/dev-space" element={<DevSpace />} />

@@ -7,16 +7,18 @@ import {
 } from "./components";
 import { useApp } from "@/hooks";
 import { useApp as useAppContext } from "@/contexts";
-import { SparklesIcon } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { ErrorBoundary } from "react-error-boundary";
 import { ErrorLayout } from "@/layouts";
 import { getPlatform } from "@/lib";
+import { getAppIconOption } from "@/lib/app-icons";
 
 const App = () => {
   const { isHidden, systemAudio } = useApp();
   const { customizable } = useAppContext();
   const platform = getPlatform();
+  const appIcon = getAppIconOption(customizable.appIcon.selected);
+  const AppIcon = appIcon.icon;
 
   const openDashboard = async () => {
     try {
@@ -74,7 +76,7 @@ const App = () => {
               title="Open Dev Space"
               onClick={openDashboard}
             >
-              <SparklesIcon className="h-4 w-4" />
+              <AppIcon className="h-4 w-4" />
             </Button>
           </div>
 

@@ -13,6 +13,7 @@ import {
   GlobeIcon,
   BugIcon,
   MessageSquareTextIcon,
+  PaletteIcon,
 } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 import { useApp } from "@/contexts";
@@ -46,6 +47,11 @@ export const useMenuItems = () => {
       icon: Settings,
       label: "App Settings",
       href: "/settings",
+    },
+    {
+      icon: PaletteIcon,
+      label: "App Icon",
+      href: "/app-icon",
     },
     {
       icon: MessageSquareTextIcon,

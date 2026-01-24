@@ -1,5 +1,6 @@
-import { SparklesIcon } from "lucide-react";
 import { Button } from "@/components";
+import { useApp } from "@/contexts";
+import { getAppIconOption } from "@/lib/app-icons";
 import { cn } from "@/lib/utils";
 import { useLocation, useNavigate } from "react-router-dom";
 import { openUrl } from "@tauri-apps/plugin-opener";
@@ -8,6 +9,9 @@ import { useMenuItems, useVersion } from "@/hooks";
 export const Sidebar = () => {
   const { version, isLoading } = useVersion();
   const { menu, footerLinks, footerItems } = useMenuItems();
+  const { customizable } = useApp();
+  const appIcon = getAppIconOption(customizable.appIcon.selected);
+  const AppIcon = appIcon.icon;
 
   const navigate = useNavigate();
   const activeRoute = useLocation().pathname;
@@ -19,7 +23,7 @@ export const Sidebar = () => {
         className="flex h-16 items-center px-4 pt-10 gap-1.5"
       >
         <div className="flex size-6 lg:size-7 items-center justify-center rounded-lg bg-primary">
-          <SparklesIcon className="size-4 lg:size-5 text-primary-foreground transition-all duration-300" />
+          <AppIcon className="size-4 lg:size-5 text-primary-foreground transition-all duration-300" />
         </div>
         <div className="flex flex-col">
           <h1 className="text-xs lg:text-md font-semibold text-foreground transition-all duration-300">
