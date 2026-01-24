@@ -74,11 +74,112 @@ pub fn center_window_completely(window: &WebviewWindow) -> Result<(), Box<dyn st
 pub fn set_window_height(window: tauri::WebviewWindow, height: u32) -> Result<(), String> {
     use tauri::{LogicalSize, Size};
 
-    // Simply set the window size with fixed width and new height
-    let new_size = LogicalSize::new(600.0, height as f64);
+    let scale_factor = window
+        .scale_factor()
+        .map_err(|e| format!("Failed to get scale factor: {}", e))?;
+    let current_size = window
+        .inner_size()
+        .map_err(|e| format!("Failed to get window size: {}", e))?;
+    let current_logical = current_size.to_logical::<f64>(scale_factor);
+
+    // Preserve current width while changing height
+    let new_size = LogicalSize::new(current_logical.width, height as f64);
     window
         .set_size(Size::Logical(new_size))
         .map_err(|e| format!("Failed to resize window: {}", e))?;
+
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_window_width(
+    window: tauri::WebviewWindow,
+    width: u32,
+    anchor: Option<String>,
+) -> Result<(), String> {
+    use tauri::{LogicalSize, PhysicalPosition, Position, Size};
+
+    const MIN_OVERLAY_WIDTH: u32 = 600;
+    const MAX_OVERLAY_MARGIN: u32 = 16;
+
+    let scale_factor = window
+        .scale_factor()
+        .map_err(|e| format!("Failed to get scale factor: {}", e))?;
+
+    let current_pos = window
+        .outer_position()
+        .map_err(|e| format!("Failed to get window position: {}", e))?;
+    let current_outer = window
+        .outer_size()
+        .map_err(|e| format!("Failed to get window size: {}", e))?;
+    let current_inner = window
+        .inner_size()
+        .map_err(|e| format!("Failed to get window size: {}", e))?;
+
+    let requested_physical = (width as f64 * scale_factor).round() as u32;
+    let min_physical = (MIN_OVERLAY_WIDTH as f64 * scale_factor).round() as u32;
+
+    let monitor = window
+        .current_monitor()
+        .map_err(|e| format!("Failed to get current monitor: {}", e))?
+        .or_else(|| window.primary_monitor().ok().flatten());
+
+    let max_physical = monitor
+        .as_ref()
+        .map(|monitor| {
+            let work_area_width = monitor.work_area().size.width;
+            work_area_width.saturating_sub(MAX_OVERLAY_MARGIN * 2)
+        })
+        .unwrap_or(requested_physical.max(min_physical));
+
+    let clamped_physical = requested_physical
+        .max(min_physical)
+        .min(max_physical.max(min_physical));
+
+    let clamped_logical = clamped_physical as f64 / scale_factor;
+    let current_logical = current_inner.to_logical::<f64>(scale_factor);
+
+    let anchor = anchor.unwrap_or_else(|| "center".to_string());
+    let mut new_x = current_pos.x;
+
+    match anchor.as_str() {
+        "right" => {
+            new_x = current_pos.x + current_outer.width as i32 - clamped_physical as i32;
+        }
+        "center" => {
+            new_x = current_pos.x
+                + ((current_outer.width as i32 - clamped_physical as i32) / 2);
+        }
+        _ => {}
+    }
+
+    if let Some(monitor) = monitor {
+        let work_area = monitor.work_area();
+        let min_x = work_area.position.x;
+        let mut max_x = min_x + work_area.size.width as i32 - clamped_physical as i32;
+
+        if max_x < min_x {
+            max_x = min_x;
+        }
+
+        if new_x < min_x {
+            new_x = min_x;
+        } else if new_x > max_x {
+            new_x = max_x;
+        }
+    }
+
+    let new_size = LogicalSize::new(clamped_logical, current_logical.height);
+    window
+        .set_size(Size::Logical(new_size))
+        .map_err(|e| format!("Failed to resize window: {}", e))?;
+
+    window
+        .set_position(Position::Physical(PhysicalPosition {
+            x: new_x,
+            y: current_pos.y,
+        }))
+        .map_err(|e| format!("Failed to set window position: {}", e))?;
 
     Ok(())
 }

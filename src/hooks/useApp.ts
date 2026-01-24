@@ -2,14 +2,32 @@ import { useEffect, useState } from "react";
 import { useTitles, useSystemAudio } from "@/hooks";
 import { listen } from "@tauri-apps/api/event";
 import { safeLocalStorage, migrateLocalStorageToSQLite } from "@/lib";
+import { STORAGE_KEYS } from "@/config";
 import { getShortcutsConfig } from "@/lib/storage";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 export const useApp = () => {
   const systemAudio = useSystemAudio();
   const [isHidden, setIsHidden] = useState(false);
   // Initialize title management
   useTitles();
+
+  useEffect(() => {
+    const storedWidth = safeLocalStorage.getItem(STORAGE_KEYS.OVERLAY_WIDTH);
+    const parsedWidth = storedWidth ? Number(storedWidth) : null;
+
+    if (parsedWidth && Number.isFinite(parsedWidth)) {
+      const window = getCurrentWebviewWindow();
+      invoke("set_window_width", {
+        window,
+        width: Math.round(parsedWidth),
+        anchor: "center",
+      }).catch((error) => {
+        console.error("Failed to restore overlay width:", error);
+      });
+    }
+  }, []);
 
   // Initialize shortcuts from localStorage on app startup
   useEffect(() => {
