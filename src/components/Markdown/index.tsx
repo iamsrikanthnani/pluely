@@ -12,6 +12,13 @@ export function Markdown({
   children,
   isStreaming = false,
 }: MarkdownRendererProps) {
+  const processedChildren = React.useMemo(() => {
+    if (typeof children !== "string") return children;
+    return children
+      .replace(/<think>/g, "\n_**Thought Process:**_\n\n")
+      .replace(/<\/think>/g, "\n\n---\n\n");
+  }, [children]);
+
   return (
     <Streamdown
       isAnimating={isStreaming}
@@ -28,7 +35,7 @@ export function Markdown({
         },
       }}
     >
-      {children}
+      {processedChildren}
     </Streamdown>
   );
 }
