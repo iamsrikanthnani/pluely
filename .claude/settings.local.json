@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(cmd.exe /c \"node --version\":*)",
+      "Bash(cmd.exe /c \"rustc --version\")",
+      "Bash(cmd.exe /c \"npm --version\")",
+      "Bash(cmd.exe /c \"node --version && npm --version && rustc --version\")",
+      "Bash(cmd.exe:*)",
+      "Bash(powershell.exe -Command:*)",
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\futur\\\\Downloads\\\\iCloudDrive\\\\Codebase\\\\pluely\\\\check_env.ps1\")",
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\futur\\\\Downloads\\\\iCloudDrive\\\\Codebase\\\\pluely\\\\run_dev.ps1\")",
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\futur\\\\Downloads\\\\iCloudDrive\\\\Codebase\\\\pluely\\\\check_msvc.ps1\")",
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\futur\\\\Downloads\\\\iCloudDrive\\\\Codebase\\\\pluely\\\\find_sdk.ps1\")",
+      "Bash(powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"C:\\\\Users\\\\futur\\\\Downloads\\\\iCloudDrive\\\\Codebase\\\\pluely\\\\find_sdk2.ps1\")",
+      "Bash(powershell.exe:*)",
+      "Bash(dir:*)",
+      "Bash(powershell -Command \"& { Import-Module ''C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\Common7\\\\Tools\\\\Microsoft.VisualStudio.DevShell.dll''; Enter-VsDevShell -VsInstallPath ''C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community'' -SkipAutomaticLocation; cd ''C:\\\\Users\\\\futur\\\\Downloads\\\\iCloudDrive\\\\Codebase\\\\pluely\\\\src-tauri''; cargo check 2>&1 }\")",
+      "Bash(tasklist:*)",
+      "Bash(findstr:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell -Command \"Get-Process -Name ''Pluely'' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Get-Process -Name ''node'' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue; Write-Host ''Cleaned up''\")",
+      "Bash(powershell -Command \"& { Import-Module ''C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community\\\\Common7\\\\Tools\\\\Microsoft.VisualStudio.DevShell.dll''; Enter-VsDevShell -VsInstallPath ''C:\\\\Program Files\\\\Microsoft Visual Studio\\\\2022\\\\Community'' -SkipAutomaticLocation; cd ''C:\\\\Users\\\\futur\\\\Downloads\\\\iCloudDrive\\\\Codebase\\\\pluely''; npm run tauri dev 2>&1 }\")",
+      "Bash(powershell -Command \"Start-Sleep -Seconds 30; Get-Content ''C:\\\\Users\\\\futur\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-futur-Downloads-iCloudDrive-Codebase-pluely\\\\tasks\\\\be65201.output'' | Select-Object -Last 30\")",
+      "Bash(powershell:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx vite build:*)",
+      "Bash(git add:*)"
+    ]
+  }
+}

@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components";
-import { AudioVisualizer } from "@/pages/app/components/speech/audio-visualizer";
 import { shouldUsePluelyAPI, fetchSTT } from "@/lib";
 import { useApp } from "@/contexts";
 import { StopCircle, Send } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 
 interface AudioRecorderProps {
   onTranscriptionComplete: (text: string) => void;
@@ -12,26 +12,31 @@ interface AudioRecorderProps {
 
 const MAX_DURATION = 3 * 60 * 1000;
 
+// Detect Windows platform for Rust-based recording
+const isWindows =
+  navigator.platform?.toLowerCase().includes("win") ||
+  navigator.userAgent?.toLowerCase().includes("windows");
+
 export const AudioRecorder = ({
   onTranscriptionComplete,
   onCancel,
 }: AudioRecorderProps) => {
   const { selectedSttProvider, allSttProviders, selectedAudioDevices } =
     useApp();
-  const [audioStream, setAudioStream] = useState<MediaStream | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [duration, setDuration] = useState(0);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
   const startTimeRef = useRef<number>(0);
   const durationIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const maxDurationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
+  const isCleanedUpRef = useRef(false);
 
-  // Cleanup function - stops all tracks and clears refs
+  // Cleanup function
   const cleanup = useCallback(() => {
-    // Clear timers
+    if (isCleanedUpRef.current) return;
+    isCleanedUpRef.current = true;
+
     if (durationIntervalRef.current) {
       clearInterval(durationIntervalRef.current);
       durationIntervalRef.current = null;
@@ -40,118 +45,122 @@ export const AudioRecorder = ({
       clearTimeout(maxDurationTimeoutRef.current);
       maxDurationTimeoutRef.current = null;
     }
-
-    // Stop media recorder
-    if (mediaRecorderRef.current?.state === "recording") {
-      try {
-        mediaRecorderRef.current.stop();
-      } catch (e) {
-        // Ignore errors when stopping
-      }
-    }
-    mediaRecorderRef.current = null;
-
-    // Stop all audio tracks - this is critical for releasing the microphone
-    const stream = streamRef.current;
-    if (stream) {
-      stream.getTracks().forEach((track) => {
-        track.stop();
-        track.enabled = false;
-      });
-      streamRef.current = null;
-    }
-
-    // Also stop from state
-    if (audioStream) {
-      audioStream.getTracks().forEach((track) => {
-        track.stop();
-        track.enabled = false;
-      });
-    }
-    setAudioStream(null);
-  }, [audioStream]);
+    setIsRecording(false);
+  }, []);
 
   useEffect(() => {
+    isCleanedUpRef.current = false;
     startRecording();
 
-    // Cleanup on unmount
     return () => {
       cleanup();
+      // On unmount, try to stop any ongoing Rust recording to release the mic
+      if (isWindows) {
+        invoke("stop_microphone_recording").catch(() => {});
+      }
     };
   }, []);
 
   const startRecording = async () => {
     try {
-      const deviceId = selectedAudioDevices?.input?.id;
+      console.log("[AudioRecorder] Starting recording, isWindows:", isWindows);
+      console.log(
+        "[AudioRecorder] Selected device:",
+        selectedAudioDevices?.input
+      );
 
-      const audioConstraints: MediaTrackConstraints =
-        deviceId && deviceId !== "default"
-          ? { deviceId: { exact: deviceId } }
-          : {};
+      if (isWindows) {
+        // Use Rust WASAPI recording (bypasses WebView2 getUserMedia bug)
+        const deviceId = selectedAudioDevices?.input?.id || undefined;
+        console.log(
+          "[AudioRecorder] Using Rust WASAPI, deviceId:",
+          deviceId
+        );
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: audioConstraints,
-      });
+        await invoke("start_microphone_recording", {
+          deviceId,
+        });
 
-      // Store in both ref and state
-      streamRef.current = stream;
-      setAudioStream(stream);
+        console.log("[AudioRecorder] Rust recording started successfully");
+      }
+      // On macOS/Linux, browser getUserMedia works fine — but this component
+      // currently only needs to work on Windows. If needed, add browser fallback here.
 
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm")
-        ? "audio/webm"
-        : "audio/ogg";
-
-      const recorder = new MediaRecorder(stream, { mimeType });
-      mediaRecorderRef.current = recorder;
-      audioChunksRef.current = [];
+      setIsRecording(true);
       startTimeRef.current = Date.now();
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
-        }
-      };
-
-      recorder.start(100);
 
       durationIntervalRef.current = setInterval(() => {
         setDuration(Date.now() - startTimeRef.current);
       }, 100);
 
       maxDurationTimeoutRef.current = setTimeout(() => {
-        if (mediaRecorderRef.current?.state === "recording") {
-          handleSend();
-        }
+        handleSend();
       }, MAX_DURATION);
     } catch (error) {
-      console.error("Failed to start recording:", error);
+      console.error("[AudioRecorder] Failed to start recording:", error);
       cleanup();
       onCancel();
     }
   };
 
-  const handleStop = () => {
+  const handleStop = async () => {
     cleanup();
+    // Stop the Rust recording without using the audio
+    if (isWindows) {
+      try {
+        await invoke("stop_microphone_recording");
+      } catch (e) {
+        // Ignore — may not be recording
+      }
+    }
     onCancel();
   };
 
   const handleSend = async () => {
-    if (!mediaRecorderRef.current || isTranscribing) return;
+    if (isTranscribing) return;
 
     setIsTranscribing(true);
-
-    const mimeType = mediaRecorderRef.current.mimeType;
-    const chunks = [...audioChunksRef.current];
-
-    // Cleanup immediately after getting chunks
     cleanup();
 
     try {
-      const audioBlob = new Blob(chunks, { type: mimeType });
+      let audioBlob: Blob;
+
+      if (isWindows) {
+        // Stop Rust recording and get base64 WAV
+        console.log("[AudioRecorder] Stopping Rust recording...");
+        const wavBase64 = await invoke<string>("stop_microphone_recording");
+        console.log(
+          "[AudioRecorder] Got WAV base64, length:",
+          wavBase64.length
+        );
+
+        // Convert base64 to Blob
+        const binaryString = atob(wavBase64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        audioBlob = new Blob([bytes], { type: "audio/wav" });
+      } else {
+        // Fallback for non-Windows (shouldn't normally reach here)
+        console.error(
+          "[AudioRecorder] Non-Windows platform, no audio available"
+        );
+        onCancel();
+        return;
+      }
+
+      console.log("[AudioRecorder] Audio blob size:", audioBlob.size);
 
       const usePluelyAPI = await shouldUsePluelyAPI();
       const provider = allSttProviders.find(
         (p) => p.id === selectedSttProvider.provider
+      );
+      console.log(
+        "[AudioRecorder] STT provider:",
+        provider?.id,
+        "usePluely:",
+        usePluelyAPI
       );
 
       const text = await fetchSTT({
@@ -160,9 +169,10 @@ export const AudioRecorder = ({
         audio: audioBlob,
       });
 
+      console.log("[AudioRecorder] Transcription result:", text);
       onTranscriptionComplete(text);
     } catch (error) {
-      console.error("Transcription failed:", error);
+      console.error("[AudioRecorder] Transcription failed:", error);
       onCancel();
     }
   };
@@ -177,13 +187,28 @@ export const AudioRecorder = ({
   return (
     <div className="border bg-background rounded-lg overflow-hidden">
       <div className="h-12 relative bg-muted/20">
-        {audioStream ? (
-          <div className="h-full w-full pt-3">
-            <AudioVisualizer stream={audioStream} isRecording={true} />
+        {isRecording ? (
+          <div className="h-full flex items-center justify-center gap-2">
+            <div className="flex items-center gap-1">
+              {[...Array(5)].map((_, i) => (
+                <div
+                  key={i}
+                  className="w-1 bg-red-500 rounded-full animate-pulse"
+                  style={{
+                    height: `${12 + Math.random() * 16}px`,
+                    animationDelay: `${i * 0.15}s`,
+                    animationDuration: "0.6s",
+                  }}
+                />
+              ))}
+            </div>
+            <span className="text-sm text-muted-foreground ml-2">
+              Recording...
+            </span>
           </div>
         ) : (
           <div className="h-full flex items-center justify-center text-sm text-muted-foreground">
-            Initializing...
+            {isTranscribing ? "Transcribing..." : "Initializing..."}
           </div>
         )}
       </div>

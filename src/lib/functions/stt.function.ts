@@ -127,9 +127,11 @@ export async function fetchSTT(params: STTParams): Promise<string> {
     if (isForm) {
       const form = new FormData();
       const freshBlob = new Blob([await audio.arrayBuffer()], {
-        type: audio.type,
+        type: audio.type || "audio/wav",
       });
-      form.append("file", freshBlob, "audio.wav");
+      // Use correct file extension based on actual audio type
+      const ext = audio.type?.includes("webm") ? "webm" : audio.type?.includes("ogg") ? "ogg" : "wav";
+      form.append("file", freshBlob, `audio.${ext}`);
       const headerKeys = Object.keys(headers).map((k) =>
         k.toUpperCase().replace(/[-_]/g, "")
       );

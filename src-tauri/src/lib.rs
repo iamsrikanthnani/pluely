@@ -11,6 +11,7 @@ use tauri_plugin_posthog::{init as posthog_init, PostHogConfig, PostHogOptions};
 use tokio::task::JoinHandle;
 mod speaker;
 use capture::CaptureState;
+use speaker::MicRecordingState;
 use speaker::VadConfig;
 
 #[cfg(target_os = "macos")]
@@ -31,6 +32,15 @@ fn get_app_version() -> String {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    // Auto-grant microphone/camera permissions in WebView2 on Windows
+    #[cfg(target_os = "windows")]
+    unsafe {
+        std::env::set_var(
+            "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+            "--enable-media-stream --auto-grant-permissions",
+        );
+    }
+
     // Get PostHog API key
     let posthog_api_key = option_env!("POSTHOG_API_KEY").unwrap_or("").to_string();
     let mut builder = tauri::Builder::default()
@@ -41,6 +51,7 @@ pub fn run() {
         )
         .manage(AudioState::default())
         .manage(CaptureState::default())
+        .manage(MicRecordingState::default())
         .manage(shortcuts::WindowVisibility {
             is_hidden: Mutex::new(false),
         })
@@ -115,6 +126,8 @@ pub fn run() {
             speaker::get_audio_sample_rate,
             speaker::get_input_devices,
             speaker::get_output_devices,
+            speaker::start_microphone_recording,
+            speaker::stop_microphone_recording,
         ])
         .setup(|app| {
             // Setup main window positioning

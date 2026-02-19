@@ -336,6 +336,210 @@ impl Drop for SpeakerStream {
     }
 }
 
+// ─── Microphone Recorder (for chat audio recording, bypasses WebView2 getUserMedia bug) ───
+
+pub struct MicrophoneRecorder {
+    sample_queue: Arc<Mutex<Vec<f32>>>,
+    waker_state: Arc<Mutex<WakerState>>,
+    capture_thread: Option<thread::JoinHandle<()>>,
+    actual_sample_rate: u32,
+}
+
+impl MicrophoneRecorder {
+    /// Start recording from a microphone device (Direction::Capture).
+    /// If `device_id` is None or "default", uses the system default input device.
+    pub fn start(device_id: Option<String>) -> Result<Self> {
+        let device_id = device_id.filter(|id| !id.is_empty() && id != "default");
+        let sample_queue = Arc::new(Mutex::new(Vec::new()));
+        let waker_state = Arc::new(Mutex::new(WakerState {
+            waker: None,
+            has_data: false,
+            shutdown: false,
+        }));
+        let (init_tx, init_rx) = mpsc::channel();
+
+        let queue_clone = sample_queue.clone();
+        let waker_clone = waker_state.clone();
+
+        let capture_thread = thread::spawn(move || {
+            if let Err(e) =
+                Self::mic_capture_loop(queue_clone, waker_clone, init_tx, device_id)
+            {
+                error!("Microphone capture loop failed: {}", e);
+            }
+        });
+
+        let actual_sample_rate = match init_rx.recv_timeout(Duration::from_secs(5)) {
+            Ok(Ok(rate)) => rate,
+            Ok(Err(e)) => {
+                error!("Microphone initialization failed: {}", e);
+                return Err(e);
+            }
+            Err(_) => {
+                error!("Microphone initialization timeout");
+                return Err(anyhow::anyhow!("Microphone initialization timeout"));
+            }
+        };
+
+        Ok(MicrophoneRecorder {
+            sample_queue,
+            waker_state,
+            capture_thread: Some(capture_thread),
+            actual_sample_rate,
+        })
+    }
+
+    /// Stop recording and return all captured f32 samples + sample rate.
+    pub fn stop(mut self) -> (Vec<f32>, u32) {
+        // Signal shutdown
+        {
+            let mut state = self.waker_state.lock().unwrap();
+            state.shutdown = true;
+        }
+
+        // Wait for capture thread to finish
+        if let Some(thread) = self.capture_thread.take() {
+            let _ = thread.join();
+        }
+
+        // Drain the buffer
+        let samples = {
+            let mut queue = self.sample_queue.lock().unwrap();
+            std::mem::take(&mut *queue)
+        };
+
+        (samples, self.actual_sample_rate)
+    }
+
+    pub fn sample_rate(&self) -> u32 {
+        self.actual_sample_rate
+    }
+
+    fn mic_capture_loop(
+        sample_queue: Arc<Mutex<Vec<f32>>>,
+        waker_state: Arc<Mutex<WakerState>>,
+        init_tx: mpsc::Sender<Result<u32>>,
+        device_id: Option<String>,
+    ) -> Result<()> {
+        let init_result = (|| -> Result<_> {
+            // Use Direction::Capture for microphone (NOT Direction::Render which is loopback)
+            let device = match device_id {
+                Some(ref id) => match find_device_by_id(&Direction::Capture, id) {
+                    Some(d) => d,
+                    None => {
+                        error!("[MicrophoneRecorder] Device not found: {}, falling back to default", id);
+                        get_default_device(&Direction::Capture)?
+                    }
+                },
+                None => get_default_device(&Direction::Capture)?,
+            };
+
+            let device_name = device
+                .get_friendlyname()
+                .unwrap_or_else(|_| "Unknown".to_string());
+            eprintln!("[MicrophoneRecorder] Using device: {}", device_name);
+
+            let mut audio_client = device.get_iaudioclient()?;
+
+            let device_format = audio_client.get_mixformat()?;
+            let actual_rate = device_format.get_samplespersec();
+
+            let desired_format =
+                WaveFormat::new(32, 32, &SampleType::Float, actual_rate as usize, 1, None);
+
+            let (_def_time, min_time) = audio_client.get_device_period()?;
+
+            // For microphone capture, use Direction::Capture (not loopback)
+            let mode = StreamMode::EventsShared {
+                autoconvert: true,
+                buffer_duration_hns: min_time,
+            };
+
+            audio_client.initialize_client(&desired_format, &Direction::Capture, &mode)?;
+
+            let h_event = audio_client.set_get_eventhandle()?;
+            let render_client = audio_client.get_audiocaptureclient()?;
+
+            audio_client.start_stream()?;
+
+            Ok((h_event, render_client, actual_rate))
+        })();
+
+        match init_result {
+            Ok((h_event, render_client, sample_rate)) => {
+                let _ = init_tx.send(Ok(sample_rate));
+
+                loop {
+                    {
+                        let state = waker_state.lock().unwrap();
+                        if state.shutdown {
+                            break;
+                        }
+                    }
+
+                    if h_event.wait_for_event(3000).is_err() {
+                        error!("[MicrophoneRecorder] Timeout waiting for audio event");
+                        break;
+                    }
+
+                    let mut temp_queue = VecDeque::new();
+                    if let Err(e) = render_client.read_from_device_to_deque(&mut temp_queue) {
+                        error!("[MicrophoneRecorder] Failed to read audio data: {}", e);
+                        continue;
+                    }
+
+                    if temp_queue.is_empty() {
+                        continue;
+                    }
+
+                    // Convert raw bytes to f32 samples
+                    let mut samples = Vec::new();
+                    while temp_queue.len() >= 4 {
+                        let bytes = [
+                            temp_queue.pop_front().unwrap(),
+                            temp_queue.pop_front().unwrap(),
+                            temp_queue.pop_front().unwrap(),
+                            temp_queue.pop_front().unwrap(),
+                        ];
+                        let sample = f32::from_le_bytes(bytes);
+                        samples.push(sample);
+                    }
+
+                    if !samples.is_empty() {
+                        let mut queue = sample_queue.lock().unwrap();
+                        // Safety cap: max ~3 minutes at 48kHz mono = ~8.6M samples
+                        const MAX_SAMPLES: usize = 48000 * 180;
+                        if queue.len() + samples.len() <= MAX_SAMPLES {
+                            queue.extend_from_slice(&samples);
+                        } else {
+                            error!("[MicrophoneRecorder] Buffer full, stopping");
+                            break;
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                let _ = init_tx.send(Err(e));
+            }
+        }
+
+        Ok(())
+    }
+}
+
+impl Drop for MicrophoneRecorder {
+    fn drop(&mut self) {
+        {
+            if let Ok(mut state) = self.waker_state.lock() {
+                state.shutdown = true;
+            }
+        }
+        if let Some(thread) = self.capture_thread.take() {
+            let _ = thread.join();
+        }
+    }
+}
+
 // Stream of f32 audio samples from the speaker
 impl Stream for SpeakerStream {
     type Item = f32;

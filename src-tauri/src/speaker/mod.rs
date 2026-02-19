@@ -12,6 +12,8 @@ use macos::{SpeakerInput as PlatformSpeakerInput, SpeakerStream as PlatformSpeak
 mod windows;
 #[cfg(target_os = "windows")]
 use windows::{SpeakerInput as PlatformSpeakerInput, SpeakerStream as PlatformSpeakerStream};
+#[cfg(target_os = "windows")]
+pub use windows::MicrophoneRecorder;
 
 #[cfg(target_os = "linux")]
 mod linux;

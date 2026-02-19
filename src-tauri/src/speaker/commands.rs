@@ -8,11 +8,23 @@ use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
 use std::io::Cursor;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Listener, Manager};
 use tauri_plugin_shell::ShellExt;
 use tracing::{error, warn};
+
+#[cfg(target_os = "windows")]
+use crate::speaker::MicrophoneRecorder;
+
+// State for microphone recording (used by chat AudioRecorder)
+#[derive(Default)]
+pub struct MicRecordingState {
+    #[cfg(target_os = "windows")]
+    recorder: Mutex<Option<MicrophoneRecorder>>,
+    #[cfg(not(target_os = "windows"))]
+    _phantom: std::marker::PhantomData<()>,
+}
 
 // VAD Configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -623,4 +635,145 @@ pub fn get_output_devices() -> Result<Vec<AudioDevice>, String> {
         error!("Failed to get output devices: {}", e);
         format!("Failed to get output devices: {}", e)
     })
+}
+
+/// Start microphone recording via Rust WASAPI (bypasses WebView2 getUserMedia bug).
+/// Called from chat AudioRecorder on Windows.
+#[tauri::command]
+pub async fn start_microphone_recording(
+    app: AppHandle,
+    device_id: Option<String>,
+) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        let state = app.state::<MicRecordingState>();
+        let mut guard = state
+            .recorder
+            .lock()
+            .map_err(|e| format!("Failed to acquire mic lock: {}", e))?;
+
+        if guard.is_some() {
+            return Err("Microphone recording already in progress".to_string());
+        }
+
+        eprintln!("[MicRecording] Starting with device_id: {:?}", device_id);
+
+        let recorder = MicrophoneRecorder::start(device_id).map_err(|e| {
+            error!("[MicRecording] Failed to start: {}", e);
+            format!("Failed to start microphone: {}", e)
+        })?;
+
+        eprintln!(
+            "[MicRecording] Started successfully, sample rate: {}",
+            recorder.sample_rate()
+        );
+
+        *guard = Some(recorder);
+        Ok(())
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("start_microphone_recording is only available on Windows".to_string())
+    }
+}
+
+/// Resample audio using linear interpolation.
+/// Converts from `from_rate` Hz to `to_rate` Hz.
+fn resample_linear(samples: &[f32], from_rate: u32, to_rate: u32) -> Vec<f32> {
+    if from_rate == to_rate || samples.is_empty() {
+        return samples.to_vec();
+    }
+
+    let ratio = from_rate as f64 / to_rate as f64;
+    let new_len = (samples.len() as f64 / ratio) as usize;
+    let mut resampled = Vec::with_capacity(new_len);
+
+    for i in 0..new_len {
+        let src_idx = i as f64 * ratio;
+        let idx_floor = src_idx.floor() as usize;
+        let frac = (src_idx - idx_floor as f64) as f32;
+
+        if idx_floor + 1 < samples.len() {
+            // Linear interpolation between two adjacent samples
+            let sample = samples[idx_floor] * (1.0 - frac) + samples[idx_floor + 1] * frac;
+            resampled.push(sample);
+        } else if idx_floor < samples.len() {
+            resampled.push(samples[idx_floor]);
+        }
+    }
+
+    resampled
+}
+
+/// Stop microphone recording and return base64-encoded WAV audio.
+/// Called from chat AudioRecorder on Windows.
+#[tauri::command]
+pub async fn stop_microphone_recording(app: AppHandle) -> Result<String, String> {
+    #[cfg(target_os = "windows")]
+    {
+        let state = app.state::<MicRecordingState>();
+        let recorder = {
+            let mut guard = state
+                .recorder
+                .lock()
+                .map_err(|e| format!("Failed to acquire mic lock: {}", e))?;
+            guard.take()
+        };
+
+        match recorder {
+            Some(rec) => {
+                let (samples, sample_rate) = rec.stop();
+
+                eprintln!(
+                    "[MicRecording] Stopped. Got {} samples at {} Hz ({:.1}s)",
+                    samples.len(),
+                    sample_rate,
+                    samples.len() as f32 / sample_rate as f32
+                );
+
+                if samples.is_empty() {
+                    return Err("No audio recorded".to_string());
+                }
+
+                // Resample to 16kHz for optimal Whisper performance
+                const TARGET_RATE: u32 = 16000;
+                let (final_samples, final_rate) = if sample_rate != TARGET_RATE {
+                    eprintln!(
+                        "[MicRecording] Resampling from {} Hz to {} Hz",
+                        sample_rate, TARGET_RATE
+                    );
+                    let resampled = resample_linear(&samples, sample_rate, TARGET_RATE);
+                    eprintln!(
+                        "[MicRecording] Resampled: {} -> {} samples",
+                        samples.len(),
+                        resampled.len()
+                    );
+                    (resampled, TARGET_RATE)
+                } else {
+                    (samples, sample_rate)
+                };
+
+                // Normalize audio level for consistent volume
+                let normalized = normalize_audio_level(&final_samples, 0.1);
+
+                // Convert f32 samples to base64 WAV at 16kHz
+                let b64 = samples_to_wav_b64(final_rate, &normalized)?;
+
+                eprintln!(
+                    "[MicRecording] WAV encoded at {} Hz, base64 length: {}",
+                    final_rate,
+                    b64.len()
+                );
+
+                Ok(b64)
+            }
+            None => Err("No microphone recording in progress".to_string()),
+        }
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        Err("stop_microphone_recording is only available on Windows".to_string())
+    }
 }
