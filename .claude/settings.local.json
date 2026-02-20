@@ -25,7 +25,8 @@
       "Bash(powershell:*)",
       "Bash(npx tsc:*)",
       "Bash(npx vite build:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }
