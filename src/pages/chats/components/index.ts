@@ -3,4 +3,7 @@ export * from "./ChatScreenshot";
 export * from "./ChatFiles";
 export * from "./AudioRecorder";
 export * from "./DeleteConfirmation";
+export * from "./UsageTab";
+export * from "./TranscriptTab";
+export * from "./SummaryTab";
 export * from "./View";

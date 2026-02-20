@@ -1,9 +1,5 @@
 import {
-  Badge,
-  Card,
-  Empty,
   Button,
-  Markdown,
   Textarea,
   GetLicense,
 } from "@/components";
@@ -11,27 +7,32 @@ import { getConversationById } from "@/lib";
 import { ChatConversation } from "@/types";
 import {
   Download,
-  MessageCircleIcon,
   MessageCircleReplyIcon,
   Trash2,
-  SparklesIcon,
-  UserIcon,
   SendIcon,
   Check,
   Loader2,
 } from "lucide-react";
 import { useState, useEffect } from "react";
-import moment from "moment";
 import { useParams, useNavigate } from "react-router-dom";
 import { PageLayout } from "@/layouts";
 import { useHistory, useChatCompletion } from "@/hooks";
 import { useApp } from "@/contexts";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import {
   DeleteConfirmationDialog,
   ChatAudio,
   ChatScreenshot,
   ChatFiles,
   AudioRecorder,
+  UsageTab,
+  TranscriptTab,
+  SummaryTab,
 } from ".";
 
 const View = () => {
@@ -39,6 +40,7 @@ const View = () => {
   const { hasActiveLicense, supportsImages } = useApp();
   const navigate = useNavigate();
   const [messages, setMessages] = useState<ChatConversation | null>(null);
+  const [activeTab, setActiveTab] = useState<string>("summary");
 
   const {
     handleDeleteConfirm,
@@ -66,15 +68,15 @@ const View = () => {
   }, [conversationId]);
 
   useEffect(() => {
-    // Scroll to bottom when messages load
-    if (messages?.messages.length) {
+    // Scroll to bottom when messages load (only on usage tab)
+    if (messages?.messages.length && activeTab === "usage") {
       setTimeout(() => {
         completion.messagesEndRef.current?.scrollIntoView({
           behavior: "smooth",
         });
       }, 100);
     }
-  }, [messages?.messages.length]);
+  }, [messages?.messages.length, activeTab]);
 
   const handleDelete = async () => {
     await confirmDelete();
@@ -86,7 +88,7 @@ const View = () => {
       isMainTitle={false}
       allowBackButton={true}
       title={messages?.title || ""}
-      description={`${messages?.messages.length} messages in this conversation`}
+      description={`${messages?.messages.length || 0} messages in this conversation`}
       rightSlot={
         <div className="flex flex-row items-center gap-2">
           <Button
@@ -141,187 +143,139 @@ const View = () => {
         </div>
       }
     >
-      {messages?.messages.length === 0 ? (
-        <Empty
-          isLoading={false}
-          icon={MessageCircleIcon}
-          title="No messages found"
-          description="Start a new message to get started"
-        />
-      ) : (
-        <div className="flex flex-col gap-4 pb-24 px-2">
-          {messages?.messages.map((message, index, array) => {
-            const isUser = message.role === "user";
-            const showDate =
-              index === 0 ||
-              moment(message.timestamp).format("YYYY-MM-DD") !==
-                moment(array[index - 1]?.timestamp).format("YYYY-MM-DD");
-
-            return (
-              <div key={message.id}>
-                {/* Date separator */}
-                {showDate && (
-                  <Badge
-                    variant={"outline"}
-                    className="flex items-center justify-center my-4 w-fit mx-auto"
-                  >
-                    {moment(message.timestamp).format("ddd, MMM D")}
-                  </Badge>
-                )}
-
-                {/* Message */}
-                <div
-                  className={`flex gap-3 ${
-                    isUser ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {/* Avatar - Left side for bot */}
-                  {!isUser && (
-                    <div className="flex-shrink-0">
-                      <div className="size-7 lg:size-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <SparklesIcon className="size-3 lg:size-4 text-primary" />
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Message content */}
-                  <div
-                    className={`flex flex-col gap-1 max-w-[70%] ${
-                      isUser ? "items-end" : "items-start"
-                    }`}
-                  >
-                    <Card
-                      className={`p-3 text-xs lg:text-sm transition-all shadow-none ${
-                        isUser
-                          ? "!bg-primary text-primary-foreground !border-primary rounded-tr-sm"
-                          : "!bg-muted/50 dark:!bg-muted/30 rounded-tl-sm"
-                      }`}
-                    >
-                      <Markdown>{message.content}</Markdown>
-                    </Card>
-                    <Badge
-                      variant="outline"
-                      className={`text-[10px] lg:text-xs bg-transparent border-none ${
-                        isUser ? "-mr-1" : "-ml-1"
-                      }`}
-                    >
-                      {moment(message.timestamp).format("hh:mm A")}
-                    </Badge>
-                  </div>
-
-                  {/* Avatar - Right side for user */}
-                  {isUser && (
-                    <div className="flex-shrink-0">
-                      <div className="size-7 lg:size-8 rounded-full bg-primary flex items-center justify-center">
-                        <UserIcon className="size-3 lg:size-4 text-primary-foreground" />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-          <div ref={completion.messagesEndRef} />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1">
+        <div className="px-2 pt-1">
+          <TabsList className="w-full">
+            <TabsTrigger value="summary" className="flex-1">
+              Summary
+            </TabsTrigger>
+            <TabsTrigger value="transcript" className="flex-1">
+              Transcript
+            </TabsTrigger>
+            <TabsTrigger value="usage" className="flex-1">
+              Usage
+            </TabsTrigger>
+          </TabsList>
         </div>
-      )}
 
-      {/* Sticky Footer Input */}
-      <div className="absolute bottom-0 left-0 right-0 bg-background/10 backdrop-blur">
-        {completion.error && (
-          <div className="px-4 pt-3 pb-0">
-            <div className="p-2 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
-              <strong>Error:</strong> {completion.error}
-            </div>
-          </div>
-        )}
+        <TabsContent value="summary" className="px-2">
+          <SummaryTab
+            conversationId={conversationId as string}
+            messages={messages}
+          />
+        </TabsContent>
 
-        <div className="relative flex items-start gap-2 p-4">
-          {!hasActiveLicense && (
-            <div className="select-none p-5 z-100 bg-primary/5 border border-primary/20 rounded-xl absolute top-4 left-4 right-4">
-              <div className="max-w-sm mx-auto">
-                <p className="text-sm font-medium text-center">
-                  You need an active license to use this feature.
-                </p>
+        <TabsContent value="transcript" className="px-2">
+          <TranscriptTab messages={messages} />
+        </TabsContent>
 
-                <GetLicense
-                  buttonText="Get License"
-                  buttonClassName="w-full mt-2"
-                />
+        <TabsContent value="usage">
+          <UsageTab
+            messages={messages}
+            messagesEndRef={completion.messagesEndRef}
+          />
+        </TabsContent>
+      </Tabs>
+
+      {/* Sticky Footer Input - only on Usage tab */}
+      {activeTab === "usage" && (
+        <div className="absolute bottom-0 left-0 right-0 bg-background/10 backdrop-blur">
+          {completion.error && (
+            <div className="px-4 pt-3 pb-0">
+              <div className="p-2 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+                <strong>Error:</strong> {completion.error}
               </div>
             </div>
           )}
-          <div className="flex-1 relative">
-            {completion.isRecording ? (
-              <AudioRecorder
-                onTranscriptionComplete={(text) => {
-                  completion.setIsRecording(false);
-                  completion.submit(text);
-                }}
-                onCancel={() => completion.setIsRecording(false)}
-              />
-            ) : (
-              <>
-                <div className="absolute bottom-2 left-2 flex items-center gap-1 z-10">
-                  <ChatFiles
-                    attachedFiles={completion.attachedFiles}
-                    handleFileSelect={completion.handleFileSelect}
-                    removeFile={completion.removeFile}
-                    onRemoveAllFiles={completion.onRemoveAllFiles}
-                    isLoading={completion.isLoading}
-                    isFilesPopoverOpen={completion.isFilesPopoverOpen}
-                    setIsFilesPopoverOpen={completion.setIsFilesPopoverOpen}
-                    disabled={!hasActiveLicense || !supportsImages}
-                  />
-                  <ChatAudio
-                    micOpen={completion.micOpen}
-                    setMicOpen={completion.setMicOpen}
-                    isRecording={completion.isRecording}
-                    setIsRecording={completion.setIsRecording}
-                    disabled={!hasActiveLicense}
-                  />
-                  <ChatScreenshot
-                    screenshotConfiguration={completion.screenshotConfiguration}
-                    attachedFiles={completion.attachedFiles}
-                    isLoading={completion.isLoading}
-                    captureScreenshot={completion.captureScreenshot}
-                    isScreenshotLoading={completion.isScreenshotLoading}
-                    disabled={!hasActiveLicense || !supportsImages}
+
+          <div className="relative flex items-start gap-2 p-4">
+            {!hasActiveLicense && (
+              <div className="select-none p-5 z-100 bg-primary/5 border border-primary/20 rounded-xl absolute top-4 left-4 right-4">
+                <div className="max-w-sm mx-auto">
+                  <p className="text-sm font-medium text-center">
+                    You need an active license to use this feature.
+                  </p>
+
+                  <GetLicense
+                    buttonText="Get License"
+                    buttonClassName="w-full mt-2"
                   />
                 </div>
-
-                <Textarea
-                  ref={completion.inputRef}
-                  placeholder="Type a message..."
-                  className="pr-12 pl-2 resize-none pb-12 pt-3"
-                  rows={2}
-                  value={completion.input}
-                  onChange={(e) => completion.setInput(e.target.value)}
-                  onKeyDown={completion.handleKeyPress}
-                  onPaste={completion.handlePaste}
-                  disabled={completion.isLoading || !hasActiveLicense}
-                />
-                <Button
-                  size="icon"
-                  className="size-7 lg:size-9 rounded-lg lg:rounded-xl absolute right-2 bottom-2"
-                  title="Send message"
-                  onClick={() => completion.submit()}
-                  disabled={
-                    completion.isLoading ||
-                    !completion.input.trim() ||
-                    !hasActiveLicense
-                  }
-                >
-                  {completion.isLoading ? (
-                    <Loader2 className="size-3 lg:size-4 animate-spin" />
-                  ) : (
-                    <SendIcon className="size-3 lg:size-4" />
-                  )}
-                </Button>
-              </>
+              </div>
             )}
+            <div className="flex-1 relative">
+              {completion.isRecording ? (
+                <AudioRecorder
+                  onTranscriptionComplete={(text) => {
+                    completion.setIsRecording(false);
+                    completion.submit(text);
+                  }}
+                  onCancel={() => completion.setIsRecording(false)}
+                />
+              ) : (
+                <>
+                  <div className="absolute bottom-2 left-2 flex items-center gap-1 z-10">
+                    <ChatFiles
+                      attachedFiles={completion.attachedFiles}
+                      handleFileSelect={completion.handleFileSelect}
+                      removeFile={completion.removeFile}
+                      onRemoveAllFiles={completion.onRemoveAllFiles}
+                      isLoading={completion.isLoading}
+                      isFilesPopoverOpen={completion.isFilesPopoverOpen}
+                      setIsFilesPopoverOpen={completion.setIsFilesPopoverOpen}
+                      disabled={!hasActiveLicense || !supportsImages}
+                    />
+                    <ChatAudio
+                      micOpen={completion.micOpen}
+                      setMicOpen={completion.setMicOpen}
+                      isRecording={completion.isRecording}
+                      setIsRecording={completion.setIsRecording}
+                      disabled={!hasActiveLicense}
+                    />
+                    <ChatScreenshot
+                      screenshotConfiguration={completion.screenshotConfiguration}
+                      attachedFiles={completion.attachedFiles}
+                      isLoading={completion.isLoading}
+                      captureScreenshot={completion.captureScreenshot}
+                      isScreenshotLoading={completion.isScreenshotLoading}
+                      disabled={!hasActiveLicense || !supportsImages}
+                    />
+                  </div>
+
+                  <Textarea
+                    ref={completion.inputRef}
+                    placeholder="Type a message..."
+                    className="pr-12 pl-2 resize-none pb-12 pt-3"
+                    rows={2}
+                    value={completion.input}
+                    onChange={(e) => completion.setInput(e.target.value)}
+                    onKeyDown={completion.handleKeyPress}
+                    onPaste={completion.handlePaste}
+                    disabled={completion.isLoading || !hasActiveLicense}
+                  />
+                  <Button
+                    size="icon"
+                    className="size-7 lg:size-9 rounded-lg lg:rounded-xl absolute right-2 bottom-2"
+                    title="Send message"
+                    onClick={() => completion.submit()}
+                    disabled={
+                      completion.isLoading ||
+                      !completion.input.trim() ||
+                      !hasActiveLicense
+                    }
+                  >
+                    {completion.isLoading ? (
+                      <Loader2 className="size-3 lg:size-4 animate-spin" />
+                    ) : (
+                      <SendIcon className="size-3 lg:size-4" />
+                    )}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
