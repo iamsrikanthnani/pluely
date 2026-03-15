@@ -253,5 +253,9 @@ fn init(app_handle: &AppHandle) {
             | NSWindowCollectionBehavior::NSWindowCollectionBehaviorCanJoinAllSpaces,
     );
 
+    // Prevent the panel from auto-hiding when the app deactivates,
+    // since it must remain visible when other apps are focused.
+    panel.set_hides_on_deactivate(false);
+
     panel.set_delegate(delegate);
 }
