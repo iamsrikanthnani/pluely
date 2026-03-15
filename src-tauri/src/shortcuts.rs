@@ -11,6 +11,17 @@ use tokio::time::{sleep, Duration};
 use tauri_nspanel::ManagerExt;
 
 use crate::window::show_dashboard_window;
+
+/// Shows the main panel and makes it key window WITHOUT activating the app.
+/// This prevents focus-stealing from other applications on macOS Tahoe+.
+#[cfg(target_os = "macos")]
+fn show_panel_without_activation<R: Runtime>(app: &AppHandle<R>) {
+    if let Ok(panel) = app.get_webview_panel("main") {
+        panel.make_first_responder(Some(panel.content_view()));
+        panel.order_front_regardless();
+        panel.make_key_window();
+    }
+}
 // State for window visibility
 pub struct WindowVisibility {
     #[allow(dead_code)]
@@ -235,15 +246,18 @@ fn handle_toggle_window<R: Runtime>(app: &AppHandle<R>) {
                 eprintln!("Failed to show window: {}", e);
             }
 
-            if let Err(e) = window.set_focus() {
-                eprintln!("Failed to focus window: {}", e);
-            }
-
             #[cfg(target_os = "macos")]
             {
-                let panel = app.get_webview_panel("main").unwrap();
-                panel.show();
+                // Use panel APIs to show without activating the app (stealing focus)
+                show_panel_without_activation(app);
             }
+            #[cfg(not(target_os = "macos"))]
+            {
+                if let Err(e) = window.set_focus() {
+                    eprintln!("Failed to focus window: {}", e);
+                }
+            }
+
             // Emit event to focus text input
             window.emit("focus-text-input", json!({})).unwrap();
         }
@@ -261,6 +275,9 @@ fn handle_audio_shortcut<R: Runtime>(app: &AppHandle<R>) {
             if let Err(_e) = window.show() {
                 return;
             }
+            #[cfg(target_os = "macos")]
+            show_panel_without_activation(app);
+            #[cfg(not(target_os = "macos"))]
             if let Err(e) = window.set_focus() {
                 eprintln!("Failed to focus window: {}", e);
             }
@@ -292,6 +309,9 @@ fn handle_system_audio_shortcut<R: Runtime>(app: &AppHandle<R>) {
                 eprintln!("Failed to show window: {}", e);
                 return;
             }
+            #[cfg(target_os = "macos")]
+            show_panel_without_activation(app);
+            #[cfg(not(target_os = "macos"))]
             if let Err(e) = window.set_focus() {
                 eprintln!("Failed to focus window: {}", e);
             }
@@ -613,6 +633,9 @@ fn handle_focus_input<R: Runtime>(app: &AppHandle<R>) {
             let _ = window.show();
         }
 
+        #[cfg(target_os = "macos")]
+        show_panel_without_activation(app);
+        #[cfg(not(target_os = "macos"))]
         let _ = window.set_focus();
         let _ = window.emit("focus-text-input", json!({}));
     }
