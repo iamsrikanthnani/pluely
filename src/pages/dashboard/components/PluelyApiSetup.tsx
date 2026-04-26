@@ -54,7 +54,6 @@ export const PluelyApiSetup = () => {
   const {
     pluelyApiEnabled,
     setPluelyApiEnabled,
-    hasActiveLicense,
     setHasActiveLicense,
     getActiveLicenseStatus,
     setSupportsImages,
@@ -490,7 +489,7 @@ export const PluelyApiSetup = () => {
         <Switch
           checked={pluelyApiEnabled}
           onCheckedChange={setPluelyApiEnabled}
-          disabled={!storedLicenseKey || !hasActiveLicense} // Disable if no license is stored
+          disabled={!storedLicenseKey}
         />
       </div>
     </div>

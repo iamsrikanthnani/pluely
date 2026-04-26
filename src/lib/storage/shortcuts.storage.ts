@@ -252,8 +252,7 @@ export const getAllShortcutActions = (
   const config = getShortcutsConfig();
   const actions = [...DEFAULT_SHORTCUT_ACTIONS];
 
-  // Add custom actions if user has license
-  if (hasLicense && config.customActions) {
+  if (config.customActions) {
     actions.push(...config.customActions);
   }
 
