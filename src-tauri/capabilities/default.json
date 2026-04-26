@@ -7,7 +7,6 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "updater:default",
     "macos-permissions:default",
     "keychain:default",
     "keychain:allow-get-item",

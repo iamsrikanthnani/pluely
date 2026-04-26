@@ -457,6 +457,7 @@ npm run tauri dev
 ```bash
 # Build the application
 npm run tauri build
+npm run tauri:build:x64
 ```
 
 This creates platform-specific installers in `src-tauri/target/release/bundle/`:

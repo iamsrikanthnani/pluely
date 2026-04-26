@@ -38,7 +38,8 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "tauri",
+    "tauri:build:x64": "tauri build --target x86_64-apple-darwin"
   },
   "dependencies": {
     "@bany/curl-to-json": "^1.2.8",

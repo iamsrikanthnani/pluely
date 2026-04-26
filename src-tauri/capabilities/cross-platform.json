@@ -7,7 +7,6 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "updater:default",
     "keychain:default",
     "keychain:allow-get-item",
     "keychain:allow-save-item",

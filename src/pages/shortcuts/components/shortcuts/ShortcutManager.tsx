@@ -27,7 +27,7 @@ export const ShortcutManager = () => {
 
   const loadShortcuts = () => {
     const config = getShortcutsConfig();
-    const allActions = getAllShortcutActions(true);
+    const allActions = getAllShortcutActions();
     setActions(allActions);
     setBindings(config.bindings);
   };

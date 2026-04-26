@@ -28,7 +28,6 @@ dotenv = "0.15"
 [dependencies]
 tauri = { version = "2", features = ["macos-private-api"] }
 tauri-plugin-opener = "2"
-tauri-plugin-updater = "2.9.0"
 tauri-plugin-http = "2.5.2"
 tauri-plugin-global-shortcut = "2"
 tauri-plugin-keychain = "2.0"
