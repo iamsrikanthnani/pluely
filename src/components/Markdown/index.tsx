@@ -1,6 +1,8 @@
 import React from "react";
 import { Streamdown } from "streamdown";
 import "katex/dist/katex.min.css";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
 import { openUrl } from "@tauri-apps/plugin-opener";
 
 interface MarkdownRendererProps {
@@ -17,6 +19,8 @@ export function Markdown({
       isAnimating={isStreaming}
       shikiTheme={["github-light", "github-dark"]}
       components={COMPONENTS as any}
+      remarkPlugins={[remarkMath]}
+      rehypePlugins={[rehypeKatex]}
       controls={{
         table: true,
         code: true,
