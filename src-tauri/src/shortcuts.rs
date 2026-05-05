@@ -11,6 +11,11 @@ use tokio::time::{sleep, Duration};
 use tauri_nspanel::ManagerExt;
 
 use crate::window::show_dashboard_window;
+#[inline]
+const fn should_focus_overlay_window() -> bool {
+    !cfg!(target_os = "windows")
+}
+
 // State for window visibility
 pub struct WindowVisibility {
     #[allow(dead_code)]
@@ -206,9 +211,6 @@ fn handle_toggle_window<R: Runtime>(app: &AppHandle<R>) {
             if let Err(e) = window.show() {
                 eprintln!("Failed to show window: {}", e);
             }
-            if let Err(e) = window.set_focus() {
-                eprintln!("Failed to focus window: {}", e);
-            }
             if let Err(e) = window.emit("focus-text-input", json!({})) {
                 eprintln!("Failed to emit focus-text-input event: {}", e);
             }
@@ -261,8 +263,10 @@ fn handle_audio_shortcut<R: Runtime>(app: &AppHandle<R>) {
             if let Err(_e) = window.show() {
                 return;
             }
-            if let Err(e) = window.set_focus() {
-                eprintln!("Failed to focus window: {}", e);
+            if should_focus_overlay_window() {
+                if let Err(e) = window.set_focus() {
+                    eprintln!("Failed to focus window: {}", e);
+                }
             }
         }
 
@@ -292,8 +296,10 @@ fn handle_system_audio_shortcut<R: Runtime>(app: &AppHandle<R>) {
                 eprintln!("Failed to show window: {}", e);
                 return;
             }
-            if let Err(e) = window.set_focus() {
-                eprintln!("Failed to focus window: {}", e);
+            if should_focus_overlay_window() {
+                if let Err(e) = window.set_focus() {
+                    eprintln!("Failed to focus window: {}", e);
+                }
             }
         }
 
@@ -656,4 +662,23 @@ fn handle_move_window<R: Runtime>(app: &AppHandle<R>, direction: &str) {
 #[tauri::command]
 pub fn exit_app(app_handle: tauri::AppHandle) {
     app_handle.exit(0);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::should_focus_overlay_window;
+
+    #[test]
+    fn should_not_focus_overlay_on_windows() {
+        if cfg!(target_os = "windows") {
+            assert!(!should_focus_overlay_window());
+        }
+    }
+
+    #[test]
+    fn should_focus_overlay_on_non_windows() {
+        if !cfg!(target_os = "windows") {
+            assert!(should_focus_overlay_window());
+        }
+    }
 }

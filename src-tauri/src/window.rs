@@ -19,11 +19,12 @@ pub fn setup_main_window(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 
     position_window_top_center(&window, TOP_OFFSET)?;
 
-    // Set window as non-focusable on Windows
-    // #[cfg(target_os = "windows")]
-    // {
-    //     let _ = window.set_focusable(false);
-    // }
+    // Keep overlay non-focusable on Windows to avoid stealing OS focus
+    // from the active app (critical for stealth behavior).
+    #[cfg(target_os = "windows")]
+    {
+        let _ = window.set_focusable(false);
+    }
 
     Ok(())
 }
