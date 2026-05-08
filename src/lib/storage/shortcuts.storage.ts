@@ -7,6 +7,27 @@ import {
 } from "@/types";
 import { getPlatform } from "@/lib";
 
+const normalizeWindowsShortcutBinding = (
+  actionId: string,
+  binding: ShortcutBinding
+): ShortcutBinding => {
+  if (getPlatform() !== "windows") return binding;
+
+  const normalizedKey = binding.key.toLowerCase().trim();
+
+  if (actionId === "toggle_window") {
+    if (normalizedKey.includes("oem5")) {
+      return { ...binding, key: normalizedKey.replace("oem5", "backslash") };
+    }
+
+    if (normalizedKey.includes("\\")) {
+      return { ...binding, key: normalizedKey.replace("\\", "backslash") };
+    }
+  }
+
+  return { ...binding, key: normalizedKey };
+};
+
 /**
  * Get platform-specific default key for a shortcut action
  */
@@ -53,8 +74,18 @@ export const getShortcutsConfig = (): ShortcutsConfig => {
       const parsed = JSON.parse(stored);
       // Merge with defaults to ensure all default actions are present
       const defaults = getDefaultShortcutsConfig();
+      const mergedBindings = { ...defaults.bindings, ...parsed.bindings };
+      const normalizedBindings = Object.entries(mergedBindings).reduce<
+        Record<string, ShortcutBinding>
+      >((acc, [actionId, binding]) => {
+        acc[actionId] = normalizeWindowsShortcutBinding(
+          actionId,
+          binding as ShortcutBinding
+        );
+        return acc;
+      }, {});
       return {
-        bindings: { ...defaults.bindings, ...parsed.bindings },
+        bindings: normalizedBindings,
         customActions: parsed.customActions || [],
       };
     }

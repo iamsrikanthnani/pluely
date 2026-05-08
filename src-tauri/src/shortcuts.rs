@@ -83,6 +83,44 @@ pub struct ShortcutsConfig {
     pub bindings: HashMap<String, ShortcutBinding>,
 }
 
+#[cfg(target_os = "windows")]
+fn windows_shortcut_variants(action_id: &str, shortcut: &str) -> Vec<String> {
+    let normalized = shortcut.to_lowercase();
+    let mut variants = vec![shortcut.to_string()];
+
+    if action_id == "toggle_window" {
+        if normalized.contains("backslash") {
+            variants.push(shortcut.replace("backslash", "oem5"));
+            variants.push(shortcut.replace("backslash", "\\"));
+        } else if normalized.contains("oem5") {
+            variants.push(shortcut.replace("oem5", "backslash"));
+            variants.push(shortcut.replace("oem5", "\\"));
+        } else if normalized.contains('\\') {
+            variants.push(shortcut.replace("\\", "backslash"));
+            variants.push(shortcut.replace("\\", "oem5"));
+        }
+    }
+
+    if action_id == "system_audio" {
+        if normalized.contains("m") {
+            variants.push(shortcut.replace("+m", "+M"));
+        }
+    }
+
+    let mut deduped = Vec::new();
+    for item in variants {
+        if !deduped.contains(&item) {
+            deduped.push(item);
+        }
+    }
+    deduped
+}
+
+#[cfg(not(target_os = "windows"))]
+fn windows_shortcut_variants(_action_id: &str, shortcut: &str) -> Vec<String> {
+    vec![shortcut.to_string()]
+}
+
 /// Initialize global shortcuts for the application
 pub fn setup_global_shortcuts<R: Runtime>(
     app: &AppHandle<R>,
@@ -207,7 +245,11 @@ fn handle_toggle_window<R: Runtime>(app: &AppHandle<R>) {
             eprintln!("Failed to emit toggle-window-visibility event: {}", e);
         }
 
-        if !*is_hidden {
+        if *is_hidden {
+            if let Err(e) = window.hide() {
+                eprintln!("Failed to hide window: {}", e);
+            }
+        } else {
             if let Err(e) = window.show() {
                 eprintln!("Failed to show window: {}", e);
             }
@@ -405,15 +447,48 @@ pub fn update_shortcuts<R: Runtime>(
     let mut registration_failures: Vec<(String, String, String)> = Vec::new();
 
     for (action_id, shortcut_str, shortcut) in shortcuts_to_register {
-        match app.global_shortcut().register(shortcut) {
-            Ok(_) => {
-                eprintln!("Registered shortcut: {} -> {}", action_id, shortcut_str);
-                successfully_registered.insert(action_id, shortcut_str);
+        let primary_result = app.global_shortcut().register(shortcut);
+        if primary_result.is_ok() {
+            eprintln!(
+                "Registered shortcut (primary): {} -> {}",
+                action_id, shortcut_str
+            );
+            successfully_registered.insert(action_id, shortcut_str);
+            continue;
+        }
+
+        let mut registered_with_fallback = false;
+        let mut last_error = primary_result.err().map(|e| e.to_string()).unwrap_or_default();
+        let fallback_variants = windows_shortcut_variants(&action_id, &shortcut_str);
+
+        for fallback in fallback_variants.iter().skip(1) {
+            match fallback.parse::<Shortcut>() {
+                Ok(parsed) => match app.global_shortcut().register(parsed) {
+                    Ok(_) => {
+                        eprintln!(
+                            "Registered shortcut (fallback): {} -> {} (primary was {})",
+                            action_id, fallback, shortcut_str
+                        );
+                        successfully_registered.insert(action_id.clone(), fallback.clone());
+                        registered_with_fallback = true;
+                        break;
+                    }
+                    Err(e) => {
+                        last_error = e.to_string();
+                    }
+                },
+                Err(e) => {
+                    last_error = e.to_string();
+                }
             }
-            Err(e) => {
-                eprintln!("Failed to register {} shortcut: {}", action_id, e);
-                registration_failures.push((action_id, shortcut_str, e.to_string()));
-            }
+        }
+
+        if !registered_with_fallback {
+            eprintln!(
+                "Failed to register shortcut after trying all variants: {} -> {}",
+                action_id, shortcut_str
+            );
+            registration_failures.push((action_id, shortcut_str, last_error));
         }
     }
 
@@ -666,7 +741,7 @@ pub fn exit_app(app_handle: tauri::AppHandle) {
 
 #[cfg(test)]
 mod tests {
-    use super::should_focus_overlay_window;
+    use super::{should_focus_overlay_window, windows_shortcut_variants};
 
     #[test]
     fn should_not_focus_overlay_on_windows() {
@@ -680,5 +755,19 @@ mod tests {
         if !cfg!(target_os = "windows") {
             assert!(should_focus_overlay_window());
         }
+    }
+
+    #[test]
+    fn windows_shortcut_variants_keep_primary_first() {
+        let variants = windows_shortcut_variants("toggle_window", "ctrl+backslash");
+        assert!(!variants.is_empty());
+        assert_eq!(variants[0], "ctrl+backslash");
+    }
+
+    #[test]
+    fn windows_shortcut_variants_include_toggle_window_aliases() {
+        let variants = windows_shortcut_variants("toggle_window", "ctrl+backslash");
+        assert!(variants.iter().any(|v| v == "ctrl+oem5"));
+        assert!(variants.iter().any(|v| v == "ctrl+\\"));
     }
 }
