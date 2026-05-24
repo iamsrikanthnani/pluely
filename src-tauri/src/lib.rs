@@ -119,6 +119,23 @@ pub fn run() {
         .setup(|app| {
             // Setup main window positioning
             window::setup_main_window(app).expect("Failed to setup main window");
+            #[cfg(target_os = "windows")]
+            {
+                use windows::Win32::UI::WindowsAndMessaging::{
+                    GetWindowLongW, SetWindowLongW,
+                    GWL_EXSTYLE, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
+                };
+                let main_window = app.get_webview_window("main").unwrap();
+                let hwnd = main_window.hwnd().unwrap();
+                unsafe {
+                    let ex_style = GetWindowLongW(hwnd, GWL_EXSTYLE);
+                    SetWindowLongW(
+                        hwnd,
+                        GWL_EXSTYLE,
+                        ex_style | WS_EX_NOACTIVATE.0 as i32 | WS_EX_TOOLWINDOW.0 as i32,
+                    );
+                 }
+            } 
             #[cfg(target_os = "macos")]
             init(app.app_handle());
             let app_handle = app.handle();
