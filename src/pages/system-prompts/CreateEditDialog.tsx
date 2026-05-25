@@ -53,7 +53,7 @@ export const CreateEditDialog = ({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[85vh] flex flex-col p-0">
         <DialogHeader className="mt-4 px-6 shrink-0">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4 pr-8">
             <div>
               <DialogTitle>
                 {isEditing ? "Edit System Prompt" : "Create System Prompt"}
