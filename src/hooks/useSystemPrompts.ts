@@ -181,6 +181,18 @@ export const useSystemPrompts = () => {
     [prompts, setSystemPrompt]
   );
 
+  /**
+   * Clear the active prompt selection and revert to the default system prompt.
+   * Used by the overlay's "(none)" option in the prompt switcher.
+   */
+  const clearSelection = useCallback(() => {
+    setSystemPrompt(DEFAULT_SYSTEM_PROMPT);
+    setSelectedPromptId(null);
+    safeLocalStorage.setItem(STORAGE_KEYS.SYSTEM_PROMPT, DEFAULT_SYSTEM_PROMPT);
+    safeLocalStorage.removeItem(STORAGE_KEYS.SELECTED_SYSTEM_PROMPT_ID);
+    safeLocalStorage.removeItem("selected_pluely_prompt");
+  }, [setSystemPrompt]);
+
   return {
     prompts,
     isLoading,
@@ -192,5 +204,6 @@ export const useSystemPrompts = () => {
     refreshPrompts,
     clearError,
     handleSelectPrompt,
+    clearSelection,
   };
 };

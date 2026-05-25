@@ -27,6 +27,11 @@ import {
 } from "@/lib/platform-instructions";
 import { TYPE_PROVIDER } from "@/types";
 import { cn } from "@/lib/utils";
+import { useSystemPrompts } from "@/hooks";
+
+// Sentinel value used by the overlay's system-prompt selector to
+// represent the "(none)" option (revert to default prompt).
+const PROMPT_NONE_VALUE = "__none__";
 
 // Sensitivity presets for simpler UX
 const SENSITIVITY_PRESETS = {
@@ -86,6 +91,17 @@ export const SettingsPanel = ({
 }: SettingsPanelProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // System prompt switcher (closes #192). Uses the same hook the
+  // dashboard uses, so changes are persisted to localStorage and
+  // reflected in the System Prompts page automatically.
+  const {
+    prompts,
+    selectedPromptId,
+    handleSelectPrompt,
+    clearSelection,
+  } = useSystemPrompts();
+
   const [selectedTemplate, setSelectedTemplate] = useState<string>("");
 
   // Determine current sensitivity preset based on values
@@ -233,6 +249,58 @@ export const SettingsPanel = ({
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
               AI Configuration
             </h4>
+
+            {/* System Prompt Selector — closes #192 */}
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">System Prompt</Label>
+              <Select
+                value={
+                  selectedPromptId !== null
+                    ? selectedPromptId.toString()
+                    : PROMPT_NONE_VALUE
+                }
+                onValueChange={(value) => {
+                  if (value === PROMPT_NONE_VALUE) {
+                    clearSelection();
+                  } else {
+                    handleSelectPrompt(Number(value));
+                  }
+                }}
+              >
+                <SelectTrigger className="w-full h-8 text-xs">
+                  <SelectValue placeholder="Select System Prompt" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel className="text-xs py-1">
+                      Active Prompt
+                    </SelectLabel>
+                    <SelectItem
+                      key={PROMPT_NONE_VALUE}
+                      value={PROMPT_NONE_VALUE}
+                      className="text-xs"
+                    >
+                      (none) — use default
+                    </SelectItem>
+                    {prompts.map((prompt) => (
+                      <SelectItem
+                        key={prompt.id}
+                        value={prompt.id.toString()}
+                        className="text-xs"
+                      >
+                        {prompt.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+              {prompts.length === 0 && (
+                <p className="text-[10px] text-muted-foreground">
+                  No saved prompts yet. Create them in Dashboard →
+                  System Prompts.
+                </p>
+              )}
+            </div>
 
             {/* Provider Selector */}
             <div className="space-y-2">
