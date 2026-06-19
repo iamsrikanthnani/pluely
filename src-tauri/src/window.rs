@@ -19,11 +19,31 @@ pub fn setup_main_window(app: &mut App) -> Result<(), Box<dyn std::error::Error>
 
     position_window_top_center(&window, TOP_OFFSET)?;
 
-    // Set window as non-focusable on Windows
-    // #[cfg(target_os = "windows")]
-    // {
-    //     let _ = window.set_focusable(false);
-    // }
+    ensure_main_window_non_focusable(&window);
+
+    Ok(())
+}
+
+/// Keeps the overlay from becoming the active OS window on platforms that support it.
+#[cfg(target_os = "windows")]
+pub fn ensure_main_window_non_focusable<R: Runtime>(window: &WebviewWindow<R>) {
+    if let Err(e) = window.set_focusable(false) {
+        eprintln!("Failed to set main window non-focusable: {}", e);
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+pub fn ensure_main_window_non_focusable<R: Runtime>(_window: &WebviewWindow<R>) {}
+
+/// Shows the main overlay without requesting OS focus.
+pub fn show_main_window_without_focus<R: Runtime>(
+    window: &WebviewWindow<R>,
+) -> Result<(), String> {
+    ensure_main_window_non_focusable(window);
+    window
+        .show()
+        .map_err(|e| format!("Failed to show window: {}", e))?;
+    ensure_main_window_non_focusable(window);
 
     Ok(())
 }

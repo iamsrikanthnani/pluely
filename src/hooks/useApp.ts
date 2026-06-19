@@ -79,16 +79,18 @@ export const useApp = () => {
       (event) => {
         const platform = navigator.platform.toLowerCase();
         if (typeof event.payload === "boolean" && platform.includes("win")) {
-          setIsHidden(!event.payload);
-          // find popover open and close it
+          setIsHidden(event.payload);
+          // Close any open popover when the overlay visibility changes.
           const popover = document.getElementById("popover-content");
-          // set display to none, change data-state to closed
           if (popover) {
-            popover.style.setProperty("display", "none", "important");
-            // update the data-state to closed
+            if (event.payload) {
+              popover.style.setProperty("display", "none", "important");
+            } else {
+              popover.style.removeProperty("display");
+            }
+
             popover.setAttribute("data-state", "closed");
 
-            // Also find and update the popover trigger's data-state
             const popoverTriggers = document.querySelectorAll(
               '[data-slot="popover-trigger"]'
             );

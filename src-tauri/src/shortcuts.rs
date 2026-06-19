@@ -11,6 +11,38 @@ use tokio::time::{sleep, Duration};
 use tauri_nspanel::ManagerExt;
 
 use crate::window::show_dashboard_window;
+#[cfg(target_os = "windows")]
+use crate::window::{ensure_main_window_non_focusable, show_main_window_without_focus};
+
+#[inline]
+fn should_focus_overlay_window() -> bool {
+    !cfg!(target_os = "windows")
+}
+
+fn show_overlay_window_for_shortcut<R: Runtime>(
+    window: &tauri::WebviewWindow<R>,
+) -> Result<(), String> {
+    #[cfg(target_os = "windows")]
+    {
+        show_main_window_without_focus(window)
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    {
+        window
+            .show()
+            .map_err(|e| format!("Failed to show window: {}", e))?;
+
+        if should_focus_overlay_window() {
+            window
+                .set_focus()
+                .map_err(|e| format!("Failed to focus window: {}", e))?;
+        }
+
+        Ok(())
+    }
+}
+
 // State for window visibility
 pub struct WindowVisibility {
     #[allow(dead_code)]
@@ -196,19 +228,28 @@ fn handle_toggle_window<R: Runtime>(app: &AppHandle<R>) {
     {
         let state = app.state::<WindowVisibility>();
         let mut is_hidden = state.is_hidden.lock().unwrap();
-        *is_hidden = !*is_hidden;
+        let next_hidden = !*is_hidden;
+
+        let visibility_result = if next_hidden {
+            window
+                .hide()
+                .map_err(|e| format!("Failed to hide window: {}", e))
+        } else {
+            show_main_window_without_focus(&window)
+        };
+
+        if let Err(e) = visibility_result {
+            eprintln!("{}", e);
+            return;
+        }
+
+        *is_hidden = next_hidden;
 
         if let Err(e) = window.emit("toggle-window-visibility", *is_hidden) {
             eprintln!("Failed to emit toggle-window-visibility event: {}", e);
         }
 
         if !*is_hidden {
-            if let Err(e) = window.show() {
-                eprintln!("Failed to show window: {}", e);
-            }
-            if let Err(e) = window.set_focus() {
-                eprintln!("Failed to focus window: {}", e);
-            }
             if let Err(e) = window.emit("focus-text-input", json!({})) {
                 eprintln!("Failed to emit focus-text-input event: {}", e);
             }
@@ -258,11 +299,9 @@ fn handle_audio_shortcut<R: Runtime>(app: &AppHandle<R>) {
     if let Some(window) = app.get_webview_window("main") {
         // Ensure window is visible
         if let Ok(false) = window.is_visible() {
-            if let Err(_e) = window.show() {
+            if let Err(e) = show_overlay_window_for_shortcut(&window) {
+                eprintln!("Failed to show window: {}", e);
                 return;
-            }
-            if let Err(e) = window.set_focus() {
-                eprintln!("Failed to focus window: {}", e);
             }
         }
 
@@ -288,12 +327,9 @@ fn handle_system_audio_shortcut<R: Runtime>(app: &AppHandle<R>) {
     if let Some(window) = app.get_webview_window("main") {
         // Ensure window is visible
         if let Ok(false) = window.is_visible() {
-            if let Err(e) = window.show() {
+            if let Err(e) = show_overlay_window_for_shortcut(&window) {
                 eprintln!("Failed to show window: {}", e);
                 return;
-            }
-            if let Err(e) = window.set_focus() {
-                eprintln!("Failed to focus window: {}", e);
             }
         }
 
@@ -610,11 +646,38 @@ fn handle_focus_input<R: Runtime>(app: &AppHandle<R>) {
     if let Some(window) = app.get_webview_window("main") {
         // Ensure window is visible
         if let Ok(false) = window.is_visible() {
+            #[cfg(target_os = "windows")]
+            let _ = show_main_window_without_focus(&window);
+
+            #[cfg(not(target_os = "windows"))]
             let _ = window.show();
         }
 
-        let _ = window.set_focus();
+        #[cfg(target_os = "windows")]
+        ensure_main_window_non_focusable(&window);
+
+        if should_focus_overlay_window() {
+            let _ = window.set_focus();
+        }
+
         let _ = window.emit("focus-text-input", json!({}));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::should_focus_overlay_window;
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn overlay_focus_requests_are_disabled_on_windows() {
+        assert!(!should_focus_overlay_window());
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn overlay_focus_requests_are_preserved_on_non_windows() {
+        assert!(should_focus_overlay_window());
     }
 }
 
