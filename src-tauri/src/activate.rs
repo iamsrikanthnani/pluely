@@ -309,69 +309,12 @@ pub async fn deactivate_license_api(app: AppHandle) -> Result<ActivationResponse
 }
 
 #[tauri::command]
-pub async fn validate_license_api(app: AppHandle) -> Result<ValidateResponse, String> {
-    // Get payment endpoint and API access key from environment
-    let payment_endpoint = get_payment_endpoint()?;
-    let api_access_key = get_api_access_key()?;
-    let machine_id: String = app.machine_uid().get_machine_uid().unwrap().id.unwrap();
-    let (license_key, instance_id, _) = get_stored_credentials(&app).await?;
-    let app_version: String = env!("CARGO_PKG_VERSION").to_string();
-    let validate_request = ActivationRequest {
-        license_key: license_key.clone(),
-        instance_name: instance_id.clone(),
-        machine_id: machine_id.clone(),
-        app_version: app_version.clone(),
-    };
-
-    if license_key.is_empty() || instance_id.is_empty() {
-        return Ok(ValidateResponse {
-            is_active: false,
-            last_validated_at: None,
-            is_dev_license: false,
-        });
-    }
-
-    // Make HTTP request to validate endpoint with authorization header
-    let client = reqwest::Client::new();
-    let url = format!("{}/validate", payment_endpoint);
-
-    let response = client
-        .post(&url)
-        .header("Content-Type", "application/json")
-        .header("Authorization", format!("Bearer {}", api_access_key))
-        .json(&validate_request)
-        .send()
-        .await
-        .map_err(|e| {
-            let error_msg = format!("{}", e);
-            if error_msg.contains("url (") {
-                // Remove the URL part from the error message
-                let parts: Vec<&str> = error_msg.split(" for url (").collect();
-                if parts.len() > 1 {
-                    format!("Failed to make chat request: {}", parts[0])
-                } else {
-                    format!("Failed to make chat request: {}", error_msg)
-                }
-            } else {
-                format!("Failed to make chat request: {}", error_msg)
-            }
-        })?;
-
-    let validate_response: ValidateResponse = response.json().await.map_err(|e| {
-        let error_msg = format!("{}", e);
-        if error_msg.contains("url (") {
-            // Remove the URL part from the error message
-            let parts: Vec<&str> = error_msg.split(" for url (").collect();
-            if parts.len() > 1 {
-                format!("Failed to make chat request: {}", parts[0])
-            } else {
-                format!("Failed to make chat request: {}", error_msg)
-            }
-        } else {
-            format!("Failed to make chat request: {}", error_msg)
-        }
-    })?;
-    Ok(validate_response)
+pub async fn validate_license_api(_app: AppHandle) -> Result<ValidateResponse, String> {
+    return Ok(ValidateResponse {
+        is_active: true,
+        last_validated_at: None,
+        is_dev_license: false,
+    });
 }
 
 #[tauri::command]

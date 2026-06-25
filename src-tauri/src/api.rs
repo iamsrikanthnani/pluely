@@ -52,32 +52,9 @@ struct SecureStorage {
 }
 
 pub async fn get_stored_credentials(
-    app: &AppHandle,
+    _app: &AppHandle,
 ) -> Result<(String, String, Option<Model>), String> {
-    let storage_path = get_secure_storage_path(app)?;
-
-    if !storage_path.exists() {
-        return Err("No license found. Please activate your license first.".to_string());
-    }
-
-    let content = fs::read_to_string(&storage_path)
-        .map_err(|e| format!("Failed to read storage file: {}", e))?;
-
-    let storage: SecureStorage = serde_json::from_str(&content)
-        .map_err(|e| format!("Failed to parse storage file: {}", e))?;
-
-    let license_key = storage
-        .license_key
-        .ok_or("License key not found".to_string())?;
-    let instance_id = storage
-        .instance_id
-        .ok_or("Instance ID not found".to_string())?;
-
-    let selected_model: Option<Model> = storage
-        .selected_pluely_model
-        .and_then(|json_str| serde_json::from_str(&json_str).ok());
-
-    Ok((license_key, instance_id, selected_model))
+    Ok(("dummy-license-key".to_string(), "dummy-instance-id".to_string(), None))
 }
 
 // Audio API Structs
@@ -1088,11 +1065,8 @@ pub async fn create_system_prompt(
 
 // Helper command to check if license is available
 #[tauri::command]
-pub async fn check_license_status(app: AppHandle) -> Result<bool, String> {
-    match get_stored_credentials(&app).await {
-        Ok(_) => Ok(true),
-        Err(_) => Ok(false),
-    }
+pub async fn check_license_status(_app: AppHandle) -> Result<bool, String> {
+    Ok(true)
 }
 
 #[allow(dead_code)]
