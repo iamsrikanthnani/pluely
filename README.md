@@ -1,5 +1,7 @@
 # Pluely 🚀
 
+npm run tauri dev
+
 <a href="https://pluely.com/">
   <img src="/images/app-image.png" alt="pluely banner" width="100%" />
 </a>
