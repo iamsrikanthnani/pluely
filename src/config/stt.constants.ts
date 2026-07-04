@@ -102,4 +102,20 @@ export const SPEECH_TO_TEXT_PROVIDERS = [
     responseContentPath: "results[0].alternatives[0].transcript",
     streaming: false,
   },
+  {
+    id: "openrouter-stt",
+    name: "OpenRouter Speech-to-Text",
+    curl: `curl -X POST "https://openrouter.ai/api/v1/audio/transcriptions" \\
+      -H "Authorization: Bearer {{API_KEY}}" \\
+      -H "Content-Type: application/json" \\
+      -d '{
+        "model": "{{MODEL}}",
+        "input_audio": {
+          "data": "{{AUDIO}}",
+          "format": "wav"
+        }
+      }'`,
+    responseContentPath: "text",
+    streaming: false,
+  },
 ];

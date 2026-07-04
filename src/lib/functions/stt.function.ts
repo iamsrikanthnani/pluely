@@ -1,5 +1,6 @@
 import {
   deepVariableReplacer,
+  extractVariables,
   getByPath,
   blobToBase64,
 } from "./common.function";
@@ -83,6 +84,18 @@ export async function fetchSTT(params: STTParams): Promise<string> {
     // if (file.size > maxSize) {
     //   warnings.push("Audio exceeds 10MB limit");
     // }
+
+    // Validate required variables are configured
+    const requiredVars = extractVariables(provider.curl).filter(
+      ({ key }) => key !== "audio"
+    );
+    for (const { key } of requiredVars) {
+      if (!selectedProvider.variables?.[key]?.trim()) {
+        throw new Error(
+          `Missing required variable: ${key}. Please configure it in settings.`
+        );
+      }
+    }
 
     // Build variable map
     const allVariables = {
