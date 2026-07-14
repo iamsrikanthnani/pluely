@@ -2,7 +2,7 @@
 name = "pluely"
 version = "0.1.9"
 description = "The Open Source Alternative to Cluely - A lightning-fast, privacy-first AI assistant that works seamlessly during meetings, interviews, and conversations without anyone knowing."
-authors = ["Srikanth Nani <srikanthnani1202@gmail.com>"]
+authors = ["Srikanth Nani <mail@srikanthnani.com>"]
 license = "GPL-3.0"
 repository = "https://github.com/iamsrikanthnani/pluely"
 homepage = "https://github.com/iamsrikanthnani/pluely"
