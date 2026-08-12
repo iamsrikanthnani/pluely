@@ -86,6 +86,17 @@ Hit Start and Pluely transcribes your mic and system audio live, with speaker la
 
 The full tour with visuals is at **[pluely.com/features](https://pluely.com/features)**, and pricing is at **[pluely.com/pricing](https://pluely.com/pricing)**.
 
+## 🖥️ Run it fully local with Ollama (or any other local LLM)
+
+Pluely doesn't require a hosted provider at all — point it at a local model and everything stays on your machine.
+
+1. Install [Ollama](https://ollama.com/) and pull a model, e.g. `ollama pull llama3`.
+2. Make sure Ollama is running (`ollama serve`, or it's already running in the background).
+3. In Pluely's provider settings, add Ollama using its built-in curl template, which targets `http://localhost:11434/v1/chat/completions`. No API key is needed — Ollama's local endpoint doesn't require an `Authorization` header.
+4. Set the model field to match what you pulled (e.g. `llama3`).
+
+Any other local or self-hosted server with an OpenAI-compatible `/v1/chat/completions` endpoint (LM Studio, vLLM, llama.cpp server, text-generation-webui, etc.) works the same way: add it as a custom provider with a curl template pointed at its local URL, and drop the `Authorization` header if the server doesn't require one.
+
 ## 📚 Documentation
 
 [docs.pluely.com](https://docs.pluely.com) covers every feature, setting, and edge case, with per-OS guides where platforms differ:

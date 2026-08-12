@@ -1,5 +1,14 @@
 export const SPEECH_TO_TEXT_PROVIDERS = [
   {
+    id: "local-whisper",
+    name: "Local Whisper (Offline, Free, No API Key)",
+    curl: `curl -X POST "http://127.0.0.1:8080/inference" \\
+      -F "file={{AUDIO}}" \\
+      -F "response_format=json"`,
+    responseContentPath: "text",
+    streaming: false,
+  },
+  {
     id: "openai-whisper",
     name: "OpenAI Whisper",
     curl: `curl -X POST "https://api.openai.com/v1/audio/transcriptions" \\

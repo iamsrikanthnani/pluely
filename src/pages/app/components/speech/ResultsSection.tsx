@@ -1,5 +1,5 @@
 import { ChatConversation } from "@/types";
-import { Markdown, Switch, CopyButton } from "@/components";
+import { Markdown, Switch, CopyButton, SpeakButton } from "@/components";
 import { BotIcon, HeadphonesIcon, Loader2, SparklesIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -49,7 +49,12 @@ export const ResultsSection = ({
             onCheckedChange={setConversationMode}
             className="scale-75"
           />
-          {lastAIResponse && <CopyButton content={lastAIResponse} />}
+          {lastAIResponse && (
+            <>
+              <SpeakButton content={lastAIResponse} />
+              <CopyButton content={lastAIResponse} />
+            </>
+          )}
         </div>
       </div>
 

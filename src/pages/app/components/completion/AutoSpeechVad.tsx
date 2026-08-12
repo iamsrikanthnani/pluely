@@ -9,14 +9,12 @@ import { floatArrayToWav } from "@/lib/utils";
 import { shouldUsePluelyAPI } from "@/lib/functions/pluely.api";
 
 interface AutoSpeechVADProps {
-  submit: UseCompletionReturn["submit"];
   setState: UseCompletionReturn["setState"];
   setEnableVAD: UseCompletionReturn["setEnableVAD"];
   microphoneDeviceId?: string;
 }
 
 const AutoSpeechVADInternal = ({
-  submit,
   setState,
   setEnableVAD,
   microphoneDeviceId,
@@ -76,7 +74,12 @@ const AutoSpeechVADInternal = ({
         });
 
         if (transcription) {
-          submit(transcription);
+          setState((prev: any) => ({
+            ...prev,
+            input: prev.input
+              ? `${prev.input} ${transcription}`.trim()
+              : transcription,
+          }));
         }
       } catch (error) {
         console.error("Failed to transcribe audio:", error);
