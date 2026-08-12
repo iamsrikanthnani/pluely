@@ -9,7 +9,6 @@ export const Audio = ({
   setMicOpen,
   enableVAD,
   setEnableVAD,
-  submit,
   setState,
 }: UseCompletionReturn) => {
   const { selectedSttProvider, pluelyApiEnabled, selectedAudioDevices } =
@@ -23,7 +22,6 @@ export const Audio = ({
         {(pluelyApiEnabled || speechProviderStatus) && enableVAD ? (
           <AutoSpeechVAD
             key={selectedAudioDevices.input.id}
-            submit={submit}
             setState={setState}
             setEnableVAD={setEnableVAD}
             microphoneDeviceId={selectedAudioDevices.input.id}

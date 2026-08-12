@@ -10,4 +10,5 @@ export * from "./CustomCursor";
 export * from "./Sidebar";
 export * from "./Empty";
 export * from "./Markdown/copy-button";
+export * from "./Markdown/speak-button";
 export * from "./Icons";
